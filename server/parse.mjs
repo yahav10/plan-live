@@ -14,6 +14,8 @@ export function slug(s) {
 export function shortLabel(heading) {
   const t = heading.match(TASK_HEADING);
   if (t) return 'T' + t[1];
+  const num = heading.match(/^(\d+)[.)]?(?:\s+(.*))?$/);
+  if (num) return num[2] ? `${num[1]} ${shortLabel(num[2])}` : num[1];
   for (const w of heading.split(/[\s—–:,()·/]+/)) {
     const clean = w.replace(/[^\p{L}\p{N}-]/gu, '');
     if (clean && !STOP.has(clean.toLowerCase())) return clean[0].toUpperCase() + clean.slice(1);

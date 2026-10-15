@@ -98,6 +98,10 @@ test('bad approaches block renders as code with an error', () => {
 test('short labels and slugs', () => {
   assert.equal(shortLabel('The bug, in one screen'), 'Bug');
   assert.equal(shortLabel('Task 12: Wire hooks'), 'T12');
+  assert.equal(shortLabel('1. Goal'), '1 Goal');
+  assert.equal(shortLabel('10. Rollout and risks'), '10 Rollout');
+  assert.equal(shortLabel('2) The bug, in one screen'), '2 Bug');
+  assert.equal(shortLabel('7.'), '7');
   assert.equal(shortLabel('⚠️ Before you start — read this'), 'Start');
   assert.equal(slug('⚠️'), 'x');
   assert.equal(slug('Decisions (Tom, 2026-09-09)'), 'decisions-tom-2026-09-09');
