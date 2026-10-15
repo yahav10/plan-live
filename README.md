@@ -321,6 +321,8 @@ Try your checkout without publishing:
 
 Regenerate the README visuals from the bundled example plan with `npm run screenshots` and `npm run demo-gif` (the GIF needs `ffmpeg`).
 
+See [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request, [SECURITY.md](SECURITY.md) to report a vulnerability, and [CHANGELOG.md](CHANGELOG.md) for what changed.
+
 Design notes and decisions live in [`docs/superpowers/specs/`](docs/superpowers/specs/2026-10-08-plan-live-design.md).
 
 ## License
