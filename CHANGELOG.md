@@ -2,6 +2,10 @@
 
 All notable changes to plan-live. Versions follow [semver](https://semver.org).
 
+## 0.2.2
+
+- Section tabs in the top bar show the number and name for numbered headings (`1 Goal`, `10 Rollout`) instead of a bare number.
+
 ## 0.2.1
 
 Security release. Upgrading is recommended.
