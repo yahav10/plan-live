@@ -220,3 +220,28 @@ a.chip:hover { transform: translateY(-2px); border-color: var(--accent); }
   transition: background-color .45s ease, color .45s ease, border-color .45s ease, box-shadow .45s ease, fill .45s ease, stroke .45s ease !important;
 }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+
+/* export */
+#export-menu { min-width: 220px; }
+.menu-h { padding: 9px 9px 3px; font: 600 10px var(--font-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.menu-h:first-child { padding-top: 4px; }
+.menu button { justify-content: space-between; }
+.menu button small { font: 11px var(--font-mono); color: var(--muted); }
+.graph-card, .block:has(.arch), .block:has(.mermaid-block) { position: relative; }
+.xtools { position: absolute; top: 10px; right: 12px; z-index: 2; display: flex; gap: 6px; opacity: 0; transform: translateY(-4px); transition: opacity .2s, transform .25s var(--ease); }
+.graph-card:hover > .xtools, .block:hover > .xtools, .xtools:focus-within { opacity: 1; transform: none; }
+.xtools button { font: 600 10px var(--font-mono); letter-spacing: .06em; padding: 4px 8px; border-radius: 6px; border: 1px solid var(--line-strong); background: var(--bg); color: var(--ink-2); cursor: pointer; }
+.xtools button:hover { color: var(--ink); border-color: var(--accent); }
+@media (hover: none) { .xtools { opacity: 1; transform: none; } }
+
+@page { margin: 14mm; }
+@media print {
+  .strip, .rail, .toast, .sel-comment, .xtools { display: none !important; }
+  body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body::before, body::after { display: none !important; }
+  .grid { display: block; }
+  main { padding: 0; }
+  .card { break-inside: avoid; box-shadow: none !important; backdrop-filter: none; }
+  .hero { break-after: avoid; }
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}

@@ -181,6 +181,7 @@ export async function createPlanServer({ planPath, port = 0, key = randomBytes(3
       if (route === 'GET /api/plan') return json(res, 200, planPayload());
       if (route === 'GET /api/review') return json(res, 200, reviewPayload());
       if (route === 'GET /api/status') return json(res, 200, status());
+      if (route === 'GET /api/source') { syncNow(); return json(res, 200, { text }); }
       if (route === 'GET /events') {
         res.writeHead(200, { 'content-type': 'text/event-stream', 'cache-control': 'no-store', connection: 'keep-alive' });
         res.write(`event: plan\ndata: ${JSON.stringify(planPayload())}\n\n`);

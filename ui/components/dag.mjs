@@ -1,6 +1,6 @@
 import { esc } from '../lib.mjs';
 
-const W = 180, H = 56, GX = 70, GY = 22, PAD = 10;
+const W = 180, H = 56, GX = 70, GY = 22, PAD = 32;
 const trunc = (s, n) => (s.length > n ? s.slice(0, n - 1) + '…' : s);
 
 export function layout(nodes, edges) {
@@ -17,9 +17,10 @@ export function layout(nodes, edges) {
   const cols = [];
   for (const n of nodes) (cols[depth.get(n.key)] ??= []).push(n);
   const pos = new Map();
-  cols.forEach((col, c) => (col ?? []).forEach((n, r) => pos.set(n.key, { x: c * (W + GX), y: r * (H + GY), w: W, h: H })));
-  const width = Math.max(1, cols.length) * (W + GX) - GX;
-  const height = Math.max(1, ...cols.map(c => c?.length ?? 0)) * (H + GY) - GY;
+  const dense = cols.filter(Boolean);
+  dense.forEach((col, c) => col.forEach((n, r) => pos.set(n.key, { x: c * (W + GX), y: r * (H + GY), w: W, h: H })));
+  const width = Math.max(1, dense.length) * (W + GX) - GX;
+  const height = Math.max(1, ...dense.map(c => c.length)) * (H + GY) - GY;
   return { pos, width, height };
 }
 
