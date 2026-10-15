@@ -1,0 +1,41 @@
+name: Bug report
+description: Something doesn't work as expected
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What you did, what you expected, what you got. Screenshots or a screen recording help a lot.
+    validations:
+      required: true
+  - type: textarea
+    id: plan
+    attributes:
+      label: Smallest plan that shows it
+      description: Paste the smallest markdown that reproduces the problem. Remove anything private.
+      render: markdown
+  - type: input
+    id: version
+    attributes:
+      label: plan-live version
+      placeholder: "0.2.1 (see .claude-plugin/plugin.json)"
+    validations:
+      required: true
+  - type: input
+    id: env
+    attributes:
+      label: OS and Node version
+      placeholder: "macOS 14, Node 22.4"
+    validations:
+      required: true
+  - type: input
+    id: look
+    attributes:
+      label: Theme and mode
+      placeholder: "Aurora, dark"
+  - type: textarea
+    id: logs
+    attributes:
+      label: Browser console or terminal output
+      render: shell
