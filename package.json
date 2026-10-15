@@ -14,7 +14,8 @@
     "test": "node --test test/unit/*.test.mjs",
     "test:e2e": "playwright test",
     "vendor": "node scripts/vendor.mjs",
-    "screenshots": "node scripts/screenshots.mjs"
+    "screenshots": "node scripts/screenshots.mjs",
+    "demo-gif": "node scripts/demo-gif.mjs"
   },
   "devDependencies": {
     "@fontsource/fraunces": "5.3.0",
