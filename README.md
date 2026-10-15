@@ -15,7 +15,7 @@
 
 <br>
 
-<img src="docs/screenshots/demo.gif" alt="plan-live in action: jump between tasks, write a comment, press Apply, switch themes, open the export menu" width="860">
+<img src="docs/screenshots/demo.gif" alt="plan-live in action: jump between sections with Ctrl+K, turn on the reading spine, write a comment, press Apply, switch themes, open the export menu" width="860">
 
 </div>
 
@@ -161,6 +161,8 @@ Open **Export** in the top bar. Every diagram also shows **SVG** and **PNG** but
 
 The top bar shows one pill with the section you are reading and a ring that fills as you scroll. Click it, or press `Ctrl`/`⌘` + `K`, to filter and jump between sections. Turn on **Reading spine** in the panel for a thin line along the left edge with one tick per section, sized by length and filled as you read. The choice is remembered.
 
+<img src="docs/screenshots/jump-panel.png" alt="The section pill with its jump panel open and the reading spine along the left edge" width="860">
+
 ## Themes
 
 Three themes, each in light and dark. Switch from the top bar or press `T` and `D`.
@@ -224,7 +226,7 @@ Web -> API : REST
 </tr>
 </table>
 
-- `### Task N: …` headings become their own section (they read `Task 1: …` in the jump panel).
+- `### Task N: …` headings become their own section (they read `T1`, `T2`… in the pill and the jump panel, matching the dependency graph).
 - "depends on", "after" and "blocked by" followed by `Task 1` or `T1` draw the dependency graph.
 - <code>```approaches</code> and <code>```architecture</code> blocks become cards and diagrams, and a <code>```mermaid</code> block renders as a diagram. Anything else in a fence stays plain code: `#`, `- [ ]` and `|` lines inside fences are never parsed as headings, tasks or tables.
 - `<!-- short: Graph -->` under a heading sets its short label in review notes.
@@ -324,7 +326,7 @@ Try your checkout without publishing:
 /plugin install plan-live@plan-live
 ```
 
-Regenerate the README visuals from the bundled example plan with `npm run screenshots` and `npm run demo-gif` (the GIF needs `ffmpeg`).
+Regenerate the README visuals from the bundled example plan with `npm run screenshots` and `npm run demo-gif` (the GIF needs `ffmpeg`; pass an output path such as `node scripts/demo-gif.mjs demo.mp4` to also write an MP4).
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request, [SECURITY.md](SECURITY.md) to report a vulnerability, and [CHANGELOG.md](CHANGELOG.md) for what changed.
 
