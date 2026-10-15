@@ -27,7 +27,7 @@ function revisionCard(r, comments, model) {
   const actions = r.status === 'proposed'
     ? `<div class="actions"><button class="btn yes" data-act="accept" data-id="${r.id}">Accept</button><button class="btn" data-act="reject" data-id="${r.id}">Reject</button></div>`
     : `<div class="block-error">Couldn't undo automatically. Claude has been asked to revert it by hand.</div>`;
-  return `<div class="cmt rev"><div class="who"><span class="av ai">C</span>Claude revised · ${head}</div>${diff(r.hunk.aLines, r.hunk.bLines)}${actions}</div>`;
+  return `<div class="cmt rev" data-revision="${r.id}"><div class="who"><span class="av ai">C</span>Claude revised · ${head}</div>${diff(r.hunk.aLines, r.hunk.bLines)}${actions}</div>`;
 }
 
 export function renderRail({ plan, review }) {

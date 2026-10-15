@@ -12,7 +12,7 @@ copyFileSync(`${root}test/fixtures/superpowers-style.md`, plan);
 
 const srv = await createPlanServer({ planPath: plan });
 const browser = await chromium.launch();
-const page = await browser.newPage({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 2 });
+const page = await browser.newPage({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 2, reducedMotion: 'reduce' });
 const shoot = async (name, theme, mode, prep) => {
   await page.goto(`${srv.url}&theme=${theme}&mode=${mode}`);
   await page.locator('h1.title').waitFor();
