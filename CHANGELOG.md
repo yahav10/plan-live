@@ -2,6 +2,11 @@
 
 All notable changes to plan-live. Versions follow [semver](https://semver.org).
 
+## Unreleased
+
+- Task sections are labelled `T1`, `T2`… in the pill, the jump panel and the spine, matching the dependency graph. The filter also matches the full heading, so `task` and `t2` both work.
+- New demo GIF and a jump panel screenshot in the README.
+
 ## 0.3.0
 
 - The row of numbered section tabs is replaced by one section pill: it names the section you are in, shows a ring that fills as you scroll, and slides its title when you cross into a new section.

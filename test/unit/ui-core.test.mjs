@@ -43,7 +43,7 @@ test('strip: one pill for the active section, no tab row, compact age', () => {
   assert.equal((html.match(/class="pill"/g) ?? []).length, 1);
   assert.ok(!html.includes('data-sec='));
   assert.ok(!html.includes('class="secs"'));
-  assert.match(html, /Task 1: Parser/);
+  assert.match(html, /T1 · Parser/);
   assert.match(html, /title="Updated 4s ago by Claude"/);
   assert.equal(fmtAge(4200), '4s');
   assert.equal(fmtAge(185_000), '3m');

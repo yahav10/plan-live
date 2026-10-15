@@ -37,7 +37,7 @@ button { font: inherit; }
 .jrow { display: flex; align-items: center; gap: 8px; width: 100%; padding: 7px 9px; border: 0; border-radius: 8px; background: none; color: var(--ink-2); font: inherit; font-size: 13px; text-align: left; cursor: pointer; }
 .jrow:hover, .jrow.act { background: var(--accent-soft); color: var(--accent-ink); }
 .jrow.cur .t { font-weight: 600; color: var(--ink); }
-.jrow .n { width: 20px; flex: none; font: 12px var(--font-mono); color: var(--muted); }
+.jrow .n { width: 28px; flex: none; font: 12px var(--font-mono); color: var(--muted); }
 .jrow .t { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .jrow .c { flex: none; font: 12px var(--font-mono); color: var(--muted); }
 .jrow .ck { flex: none; font-style: normal; color: var(--ok); }

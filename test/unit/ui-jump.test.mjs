@@ -6,10 +6,16 @@ const sec = (id, heading, done = 0, total = 0) => ({ id, heading, progress: { do
 const secs = [sec('goal', '1. Goal', 3, 3), sec('scope', '2. Scope', 1, 4), sec('risks', '12. Risks')];
 
 test('numbered headings keep their number and drop it from the title', () => {
-  assert.deepEqual(parseHeading('1. Goal', 0), { n: 1, title: 'Goal' });
-  assert.deepEqual(parseHeading('10) Rollout plan', 9), { n: 10, title: 'Rollout plan' });
-  assert.deepEqual(parseHeading('Architecture', 5), { n: 6, title: 'Architecture' });
-  assert.deepEqual(parseHeading('7.', 6), { n: 7, title: '7.' });
+  assert.deepEqual(parseHeading('1. Goal', 0), { n: 1, title: 'Goal', label: '1' });
+  assert.deepEqual(parseHeading('10) Rollout plan', 9), { n: 10, title: 'Rollout plan', label: '10' });
+  assert.deepEqual(parseHeading('Architecture', 5), { n: 6, title: 'Architecture', label: '6' });
+  assert.deepEqual(parseHeading('7.', 6), { n: 7, title: '7.', label: '7' });
+});
+
+test('task headings use the task number as T-label, like the dependency graph', () => {
+  assert.deepEqual(parseHeading('Task 2: Checkout API', 3), { n: 2, title: 'Checkout API', label: 'T2' });
+  assert.deepEqual(parseHeading('Task 12 - Wire hooks', 14), { n: 12, title: 'Wire hooks', label: 'T12' });
+  assert.deepEqual(parseHeading('Task 5', 6), { n: 5, title: 'Task 5', label: 'T5' });
 });
 
 test('filter matches title text or the section number', () => {
@@ -18,6 +24,10 @@ test('filter matches title text or the section number', () => {
   assert.deepEqual(filterSections(secs, ''), [0, 1, 2]);
   assert.deepEqual(filterSections(secs, '  GOAL '), [0]);
   assert.deepEqual(filterSections(secs, 'zzz'), []);
+  const tasks = [sec('a', 'Goals'), sec('b', 'Task 1: Parser'), sec('c', 'Task 2: Server')];
+  assert.deepEqual(filterSections(tasks, 'task'), [1, 2]);
+  assert.deepEqual(filterSections(tasks, 't2'), [2]);
+  assert.deepEqual(filterSections(tasks, 'parser'), [1]);
 });
 
 test('pill shows number, title and progress, without doubling the number', () => {
@@ -26,6 +36,12 @@ test('pill shows number, title and progress, without doubling the number', () =>
   assert.match(html, /1\/4/);
   assert.ok(!/2 · 2\./.test(html));
   assert.match(html, /aria-label="Jump to section\. Now in 2\. Scope"/);
+});
+
+test('pill labels a task section with its T-number and title', () => {
+  const html = renderPill({ sections: [sec('a', 'Goals'), sec('t2', 'Task 2: Checkout API', 1, 3)], active: 't2', progress: 0 });
+  assert.match(html, /T2 · Checkout API/);
+  assert.match(html, /aria-label="Jump to section\. Now in T2\. Checkout API"/);
 });
 
 test('pill renders safely with no sections and escapes titles', () => {
