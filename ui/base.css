@@ -43,6 +43,15 @@ button { font: inherit; }
 .jrow .ck { flex: none; font-style: normal; color: var(--ok); }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .jempty { padding: 12px 10px; color: var(--muted); font-size: 13px; }
+.spine { position: fixed; left: 10px; top: 66px; bottom: 18px; width: 14px; z-index: 5; display: flex; flex-direction: column; gap: 2px; }
+.spine[hidden] { display: none; }
+.tick { position: relative; display: block; width: 14px; min-height: 6px; padding: 0; border: 0; background: none; cursor: pointer; }
+.tick::before { content: ""; position: absolute; left: 6px; top: 0; bottom: 0; width: 2px; border-radius: 2px; background: var(--line-strong); opacity: .6; }
+.tick i { position: absolute; left: 6px; top: 0; width: 2px; border-radius: 2px; background: var(--accent); }
+.tick.cur::before { background: var(--accent-soft); opacity: 1; }
+.tick:hover::before { opacity: 1; }
+.tick:hover::after, .tick:focus-visible::after { content: attr(aria-label); position: absolute; left: 20px; top: 0; z-index: 6; padding: 3px 9px; border-radius: 8px; border: 1px solid var(--line-strong); background: var(--bg); color: var(--ink); font-size: 12px; white-space: nowrap; pointer-events: none; }
+@media (max-width: 900px) { .spine { display: none; } }
 .jswitch { display: flex; align-items: center; gap: 8px; margin: 4px 0 0; padding: 8px 10px 4px; border-top: 1px solid var(--line); color: var(--ink-2); font-size: 12px; cursor: pointer; }
 .tw { position: relative; }
 .tbtn, .ibtn { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 9px; border-radius: 8px; border: 1px solid var(--line); background: transparent; color: var(--ink-2); font-size: 12px; cursor: pointer; }

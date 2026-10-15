@@ -23,3 +23,4 @@ export const nextMode = m => MODES[(MODES.indexOf(m) + 1) % MODES.length];
 export const nextTheme = t => { const k = Object.keys(THEMES); return k[(k.indexOf(t) + 1) % k.length]; };
 export const modeIcon = m => ICON[m];
 export const remember = (k, v) => localStore.set(k, v);
+export const recall = k => localStore.get(k);
