@@ -25,7 +25,7 @@ Claude writes great plans in markdown. Reading a 400-line `.md` to review them i
 
 | Without plan-live | With plan-live |
 |---|---|
-| Scroll a wall of text and lose your place | Sticky section strip, progress per task, dependency graph |
+| Scroll a wall of text and lose your place | Section pill with a jump panel, progress per task, dependency graph |
 | Reply in chat: "in step 3, change…" | Comment on the exact task or selected text |
 | Hope Claude edits the right lines | Every change comes back as a diff you **Accept** or **Reject** |
 | Re-read the file to see what moved | The page updates the moment the file changes, and flashes what changed |
@@ -157,6 +157,10 @@ Open **Export** in the top bar. Every diagram also shows **SVG** and **PNG** but
 | **Review notes** | Resolved, declined, with Claude, drafts and Claude's changes as `.md` or `.json` |
 | **Diagrams** | Each graph or diagram as a styled `.svg` or a 2x `.png` |
 
+## Finding your place
+
+The top bar shows one pill with the section you are reading and a ring that fills as you scroll. Click it, or press `Ctrl`/`⌘` + `K`, to filter and jump between sections. Turn on **Reading spine** in the panel for a thin line along the left edge with one tick per section, sized by length and filled as you read. The choice is remembered.
+
 ## Themes
 
 Three themes, each in light and dark. Switch from the top bar or press `T` and `D`.
@@ -220,10 +224,10 @@ Web -> API : REST
 </tr>
 </table>
 
-- `### Task N: …` headings become their own section (tabs read `T1`, `T2`…).
+- `### Task N: …` headings become their own section (they read `Task 1: …` in the jump panel).
 - "depends on", "after" and "blocked by" followed by `Task 1` or `T1` draw the dependency graph.
 - <code>```approaches</code> and <code>```architecture</code> blocks become cards and diagrams, and a <code>```mermaid</code> block renders as a diagram. Anything else in a fence stays plain code: `#`, `- [ ]` and `|` lines inside fences are never parsed as headings, tasks or tables.
-- `<!-- short: Graph -->` under a heading sets its tab label.
+- `<!-- short: Graph -->` under a heading sets its short label in review notes.
 - Metadata lines like `**Ticket:** https://…` become chips in the header.
 
 Want to see everything at once? Open the bundled example:
@@ -246,6 +250,7 @@ Want to see everything at once? Open the bundled example:
 |---|---|
 | `C` | Comment on the focused section or task |
 | `⏎` | Apply draft comments |
+| `Ctrl` / `⌘` + `K` | Open the jump panel: type to filter sections, arrows and `⏎` to jump, `Esc` to close |
 | `J` / `K` | Next / previous section |
 | `T` / `D` | Cycle theme / cycle light, dark, auto |
 

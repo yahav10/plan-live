@@ -2,6 +2,14 @@
 
 All notable changes to plan-live. Versions follow [semver](https://semver.org).
 
+## 0.3.0
+
+- The row of numbered section tabs is replaced by one section pill: it names the section you are in, shows a ring that fills as you scroll, and slides its title when you cross into a new section.
+- Click the pill or press `Ctrl`/`⌘` + `K` for a jump panel with a filter. Arrow keys and `Enter` jump, `Esc` closes. The panel keeps its filter when the plan changes underneath it.
+- Optional **Reading spine** along the left edge, one tick per section, remembered between sessions.
+- Fixed: jumping to the last section left the indicator on the previous one.
+- Short labels for numbered headings (`1. Goal`) read `1 Goal` in review notes.
+
 ## 0.2.2
 
 - Section tabs in the top bar show the number and name for numbered headings (`1 Goal`, `10 Rollout`) instead of a bare number.
