@@ -1,0 +1,16 @@
+{
+  "name": "plan-live",
+  "owner": {
+    "name": "Tom Yahav"
+  },
+  "plugins": [
+    {
+      "name": "plan-live",
+      "source": "./",
+      "description": "Live two-way HTML view of markdown plans."
+    }
+  ],
+  "metadata": {
+    "description": "Live, two-way HTML view of markdown plans for Claude Code"
+  }
+}
