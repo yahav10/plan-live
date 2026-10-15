@@ -107,3 +107,22 @@ test('the pill arc follows the scroll position', async ({ page, plan }) => {
   await page.evaluate(() => scrollTo(0, document.documentElement.scrollHeight));
   await expect.poll(arc).toBe('1.000');
 });
+
+test('the panel opens centred under the pill', async ({ page, plan }) => {
+  await page.goto(plan.url);
+  await expect(page.locator('h1.title')).toBeVisible();
+  await openJump(page);
+  await expect(page.locator('#jump.in')).toBeVisible();
+  const mid = async sel => page.locator(sel).evaluate(el => { const r = el.getBoundingClientRect(); return r.left + r.width / 2; });
+  expect(Math.abs((await mid('#jump')) - (await mid('.pill')))).toBeLessThan(2);
+});
+
+test('scrolling to a new section keeps an open Export menu open', async ({ page, plan }) => {
+  await page.goto(plan.url);
+  await expect(page.locator('h1.title')).toBeVisible();
+  await page.locator('[data-act="export-menu"]').click();
+  await expect(page.locator('#export-menu')).toBeVisible();
+  await page.evaluate(() => scrollTo(0, document.documentElement.scrollHeight));
+  await expect(page.locator('.pill .ptxt')).toContainText('Notes');
+  await expect(page.locator('#export-menu')).toBeVisible();
+});

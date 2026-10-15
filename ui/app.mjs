@@ -7,7 +7,7 @@ import { visual } from './components/visual.mjs';
 import { hydrateMermaid } from './components/mermaid.mjs';
 import { attachPanZoom } from './components/dag.mjs';
 import { renderRail, anchorLabel } from './components/review.mjs';
-import { filterSections, renderJumpRows, renderSpine } from './components/jump.mjs';
+import { filterSections, renderJumpRows, renderSpine, renderPill } from './components/jump.mjs';
 import { exportName, toCsv, reviewMarkdown, download, diagramSvg, svgToPng, standaloneHtml } from './export.mjs';
 
 const calm = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -93,6 +93,13 @@ function trackActive() {
   paintScroll();
 }
 
+function refreshPill() {
+  const pill = document.querySelector('.pill');
+  if (!pill || !state.plan) return;
+  pill.outerHTML = renderPill({ sections: state.plan.model.sections, active: state.active, open: state.jump.open });
+  paintScroll();
+}
+
 function paintScroll() {
   document.querySelector('.pill')?.style.setProperty('--scroll', state.scroll.toFixed(3));
   paintSpineFill();
@@ -128,7 +135,7 @@ function setActive(id) {
   state.active = id;
   if (!state.plan) return;
   const swap = () => {
-    setHTML($('strip'), renderStrip(state));
+    refreshPill();
     paintSpine();
     paintScroll();
     if (state.jump.open) paintJump();
@@ -164,11 +171,18 @@ function openJump() {
   panel.querySelector('.jq').value = '';
   $('spine-toggle').checked = !!state.spine;
   paintJump();
-  setHTML($('strip'), renderStrip(state));
-  paintScroll();
+  refreshPill();
+  placeJump();
   panel.classList.remove('in');
   requestAnimationFrame(() => panel.classList.add('in'));
   panel.querySelector('.jq').focus();
+}
+
+function placeJump() {
+  const pill = document.querySelector('.pill');
+  if (!pill) return;
+  const r = pill.getBoundingClientRect(), half = Math.min(340, innerWidth - 24) / 2;
+  $('jump').style.left = `${Math.min(innerWidth - half - 12, Math.max(half + 12, r.left + r.width / 2))}px`;
 }
 
 function closeJump(returnFocus = true) {
@@ -176,8 +190,7 @@ function closeJump(returnFocus = true) {
   state.jump.open = false;
   $('jump').hidden = true;
   $('jump').classList.remove('in');
-  setHTML($('strip'), renderStrip(state));
-  paintScroll();
+  refreshPill();
   if (returnFocus) document.querySelector('.pill')?.focus();
 }
 
@@ -205,7 +218,7 @@ $('spine-toggle').addEventListener('change', e => {
   remember('spine', state.spine ? '1' : '0');
   paintSpine();
 });
-addEventListener('resize', () => { if (state.spine) paintSpine(); });
+addEventListener('resize', () => { if (state.spine) paintSpine(); if (state.jump.open) placeJump(); });
 $('jump').querySelector('.jq').addEventListener('input', e => {
   state.jump.q = e.target.value;
   state.jump.act = 0;
