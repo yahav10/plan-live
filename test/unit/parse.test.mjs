@@ -1,0 +1,126 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { readFileSync, existsSync } from 'node:fs';
+import { parse, slug, shortLabel } from '../../server/parse.mjs';
+import { splitLines, lineHash } from '../../server/diff.mjs';
+
+const fx = name => readFileSync(new URL(`../fixtures/${name}`, import.meta.url), 'utf8');
+
+test('mini: title, eyebrow and preamble fields', () => {
+  const m = parse(fx('mini.md'));
+  assert.equal(m.title, 'Mini Plan');
+  assert.equal(m.meta.eyebrow, 'rev 1 (2026-10-08)');
+  assert.deepEqual(m.meta.fields.map(f => f.label), ['Ticket', 'Repo']);
+  assert.equal(m.preamble.at(-1).type, 'paragraph');
+});
+
+test('mini: sections include promoted Task headings with short labels', () => {
+  const m = parse(fx('mini.md'));
+  assert.deepEqual(m.sections.map(s => s.short), ['Goals', 'T1', 'T2', 'T3', 'Options', 'Architecture', 'Notes']);
+  assert.deepEqual(m.progress, { done: 1, total: 4 });
+  assert.deepEqual(m.sections[1].progress, { done: 1, total: 2 });
+});
+
+test('mini: tasks carry 1-based lines and the hash of that exact line', () => {
+  const text = fx('mini.md'), lines = splitLines(text).lines, m = parse(text);
+  for (const t of m.tasks) {
+    assert.match(lines[t.line - 1], /\[( |x)\]/);
+    assert.equal(t.hash, lineHash(lines[t.line - 1]));
+  }
+  assert.equal(m.tasks.find(t => t.text === 'Implement parse').checked, false);
+});
+
+test('mini: dependency graph from reference phrases', () => {
+  const m = parse(fx('mini.md'));
+  assert.deepEqual(m.graph.nodes.map(n => n.key), ['T1', 'T2', 'T3']);
+  assert.deepEqual(m.graph.edges, [['T1', 'T2'], ['T2', 'T3'], ['T1', 'T3']]);
+});
+
+test('mini: approaches and architecture fences become structured blocks', () => {
+  const m = parse(fx('mini.md'));
+  const ap = m.sections.find(s => s.short === 'Options').blocks[0];
+  assert.equal(ap.type, 'approaches');
+  assert.deepEqual(ap.items[0], { name: 'Local server', effort: 'M', pick: true, pros: ['Live reload'], cons: ['One more process'] });
+  const ar = m.sections.find(s => s.short === 'Architecture').blocks[0];
+  assert.deepEqual(ar.edges, [['Browser', 'Server', 'SSE'], ['Server', 'Plan', 'fs.watch'], ['Claude', 'Plan', 'Edit']]);
+  assert.deepEqual(ar.nodes.map(n => n.key), ['Browser', 'Server', 'Plan', 'Claude']);
+});
+
+test('fence-aware: headings, tasks and tables inside code fences stay code', () => {
+  const m = parse(fx('mini.md'));
+  const notes = m.sections.find(s => s.short === 'Notes');
+  assert.equal(notes.blocks[0].type, 'code');
+  assert.match(notes.blocks[0].code, /- \[ \] not a task/);
+  assert.equal(notes.blocks[1].type, 'table');
+  assert.equal(notes.progress.total, 0);
+  assert.ok(!m.sections.some(s => s.heading === 'not a heading'));
+});
+
+test('superpowers-style: Task headings become sections; code lines stay code', () => {
+  const m = parse(fx('superpowers-style.md'));
+  assert.deepEqual(m.sections.map(s => s.short), ['Global', 'T1', 'T2', 'T3', 'Follow-ups']);
+  assert.equal(m.tasks.length, 5);
+  assert.deepEqual(m.graph.edges, [['T1', 'T2'], ['T2', 'T3']]);
+  assert.ok(!m.sections.some(s => s.heading === 'not a section'));
+});
+
+test('freeform-style: tables, no tasks, eyebrow from the last dash', () => {
+  const m = parse(fx('freeform-style.md'));
+  assert.equal(m.title, 'Checkout Bug — Remediation Plan');
+  assert.equal(m.meta.eyebrow, 'rev 2 (2026-01-15)');
+  assert.equal(m.sections.length, 3);
+  assert.equal(m.tasks.length, 0);
+  assert.deepEqual(m.sections[1].blocks.find(b => b.type === 'table').head, ['#', 'decision', 'consequence']);
+});
+
+const priv = name => new URL(`../fixtures/private/${name}`, import.meta.url);
+test('private real plans (local only): known section and step counts', { skip: !existsSync(priv('superpowers-checkbox.md')) && 'test/fixtures/private not present' }, () => {
+  const count = name => { const m = parse(readFileSync(priv(name), 'utf8')); return [m.sections.length, m.tasks.length]; };
+  assert.deepEqual(count('superpowers-checkbox.md'), [7, 25]);
+  assert.deepEqual(count('freeform-tables.md'), [15, 0]);
+  assert.deepEqual(count('staging-checklist.md'), [7, 0]);
+});
+
+test('duplicate headings get unique ids; ids survive inserting a section above', () => {
+  const m = parse('## A\n- [ ] x\n## A\n- [ ] y\n');
+  assert.deepEqual(m.sections.map(s => s.id), ['a', 'a-2']);
+  const before = parse(fx('mini.md')).tasks.find(t => t.text === 'Implement parse').id;
+  const after = parse(fx('mini.md').replace('## Goals', '## Inserted\ntext\n\n## Goals')).tasks.find(t => t.text === 'Implement parse').id;
+  assert.equal(after, before);
+});
+
+test('bad approaches block renders as code with an error', () => {
+  const m = parse('## X\n```approaches\njust words\n```\n');
+  assert.equal(m.sections[0].blocks[0].type, 'code');
+  assert.match(m.sections[0].blocks[0].error, /name:/);
+});
+
+test('short labels and slugs', () => {
+  assert.equal(shortLabel('The bug, in one screen'), 'Bug');
+  assert.equal(shortLabel('Task 12: Wire hooks'), 'T12');
+  assert.equal(shortLabel('⚠️ Before you start — read this'), 'Start');
+  assert.equal(slug('⚠️'), 'x');
+  assert.equal(slug('Decisions (Tom, 2026-09-09)'), 'decisions-tom-2026-09-09');
+});
+
+test('<!-- short: X --> overrides the strip label', () => {
+  assert.equal(parse('## Dependency graph\n<!-- short: Graph -->\n').sections[0].short, 'Graph');
+});
+
+test('never throws on random markdown-ish input', () => {
+  const parts = ['#', '## ', '### Task 1', '- [ ] ', '- [x] ', '|', '|---|', '```', '~~~', 'mermaid', 'approaches', '\n', '\r\n', ' ', 'after T1', '**L:** v', '-> ', ':'];
+  let seed = 7;
+  const rnd = n => (seed = (seed * 48271) % 2147483647) % n;
+  for (let i = 0; i < 300; i++) {
+    let s = '';
+    for (let k = 0; k < 40; k++) s += parts[rnd(parts.length)];
+    assert.doesNotThrow(() => parse(s));
+  }
+});
+
+test('fences indented under a list item stay code; a one-line triple-backtick span is not a fence', () => {
+  const md = '## A\n- item\n\n    ```bash\n    - [ ] not a task\n    | a | b |\n    |---|---|\n    ```\n\n- [ ] real\n\nuse ```js``` inline\n\n- [ ] after\n';
+  const m = parse(md);
+  assert.deepEqual(m.tasks.map(t => t.text), ['real', 'after']);
+  assert.ok(!m.sections[0].blocks.some(b => b.type === 'table'));
+});

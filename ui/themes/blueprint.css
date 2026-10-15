@@ -1,0 +1,40 @@
+[data-theme="blueprint"] {
+  --font-body: 'Space Grotesk', system-ui, sans-serif; --font-display: 'Space Grotesk', system-ui, sans-serif; --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+  --display-w: 700; --display-ls: -.01em; --h-w: 500; --r: 2px;
+}
+[data-theme="blueprint"][data-mode="dark"] {
+  --bg: #0a1a33; --card: rgba(10,38,77,.75); --rail: rgba(4,20,44,.6); --ink: #e6f0ff; --ink-2: #a9c4ea; --muted: #7f9dc8;
+  --line: rgba(120,170,255,.18); --line-strong: rgba(120,170,255,.4); --accent: #4cc3ff; --accent-ink: #7fd6ff; --accent-soft: rgba(76,195,255,.1);
+  --ok: #5cf2b5; --warn: #ffd166; --note: #ffd166; --note-soft: rgba(255,209,102,.12); --chip: rgba(120,170,255,.12); --hover: rgba(76,195,255,.05);
+  --track: rgba(120,170,255,.15); --node: #0c2550; --node-stroke: rgba(127,214,255,.6); --edge: rgba(127,214,255,.55);
+  --del: #ff8fa3; --del-bg: rgba(255,80,110,.12); --add: #5cf2b5; --add-bg: rgba(92,242,181,.1);
+  --apply-bg: #ffd166; --apply-ink: #0a1a33; --apply-shadow: 0 0 0 1px #ffd166, 0 0 24px -4px rgba(255,209,102,.6); --grid: rgba(127,214,255,.07);
+}
+[data-theme="blueprint"][data-mode="light"] {
+  --bg: #f3f8ff; --card: rgba(255,255,255,.85); --rail: rgba(230,240,255,.7); --ink: #0b2447; --ink-2: #2c4f80; --muted: #4a6690;
+  --line: rgba(20,90,200,.16); --line-strong: rgba(20,90,200,.35); --accent: #1570ef; --accent-ink: #0f5bc4; --accent-soft: rgba(21,112,239,.08);
+  --ok: #067352; --warn: #8a5a00; --note: #8a5a00; --note-soft: rgba(255,190,40,.16); --chip: rgba(20,90,200,.08); --hover: rgba(21,112,239,.04);
+  --track: rgba(20,90,200,.12); --node: #ffffff; --node-stroke: rgba(21,112,239,.55); --edge: rgba(21,112,239,.5);
+  --del: #b0234a; --del-bg: rgba(255,80,110,.08); --add: #067352; --add-bg: rgba(7,150,105,.08);
+  --apply-bg: #0b2447; --apply-ink: #ffd166; --apply-shadow: 0 0 0 1px #0b2447; --grid: rgba(21,112,239,.09);
+}
+[data-theme="blueprint"] body {
+  background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px),
+    linear-gradient(color-mix(in srgb, var(--grid) 50%, transparent) 1px, transparent 1px), linear-gradient(90deg, color-mix(in srgb, var(--grid) 50%, transparent) 1px, transparent 1px);
+  background-size: 80px 80px, 80px 80px, 16px 16px, 16px 16px;
+}
+[data-theme="blueprint"] h1.title { text-transform: uppercase; font-size: 30px; letter-spacing: .02em; }
+[data-theme="blueprint"] .card { position: relative; }
+[data-theme="blueprint"] .card::before, [data-theme="blueprint"] .card::after { content: ""; position: absolute; width: 10px; height: 10px; border: 1.5px solid var(--accent); }
+[data-theme="blueprint"] .card::before { top: -1px; left: -1px; border-right: 0; border-bottom: 0; }
+[data-theme="blueprint"] .card::after { bottom: -1px; right: -1px; border-left: 0; border-top: 0; }
+[data-theme="blueprint"] .card > h2 { text-transform: uppercase; letter-spacing: .06em; font-size: 15px; }
+[data-theme="blueprint"] .card > h2::before { content: attr(data-n); font: 600 11px var(--font-mono); color: var(--bg); background: var(--accent); padding: 1px 6px; margin-right: 10px; }
+[data-theme="blueprint"] .dag .node rect { stroke-dasharray: 4 3; }
+[data-theme="blueprint"] .dag .node.doing rect, [data-theme="blueprint"] .dag .node.done rect { stroke-dasharray: none; }
+[data-theme="blueprint"] .ring { background: none; }
+[data-theme="blueprint"] .ring::after { content: ""; position: absolute; inset: 0; border-radius: 50%; background: repeating-conic-gradient(var(--accent) 0 3deg, transparent 3deg 6deg);
+  -webkit-mask: radial-gradient(closest-side, transparent calc(100% - 9px), #000 calc(100% - 9px)), conic-gradient(#000 calc(var(--p) * 1%), rgba(0,0,0,.18) 0); -webkit-mask-composite: source-in;
+  mask: radial-gradient(closest-side, transparent calc(100% - 9px), #000 calc(100% - 9px)), conic-gradient(#000 calc(var(--p) * 1%), rgba(0,0,0,.18) 0); mask-composite: intersect; }
+[data-theme="blueprint"] .cb, [data-theme="blueprint"] .cmt, [data-theme="blueprint"] .apply { border-radius: 0; }
+[data-theme="blueprint"] .apply { text-transform: uppercase; letter-spacing: .1em; font-size: 12px; }

@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en" data-theme="aurora" data-mode="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>plan-live</title>
+  <link rel="stylesheet" href="/vendor/fonts.css">
+  <link rel="stylesheet" href="/base.css">
+  <link rel="stylesheet" href="/themes/aurora.css">
+  <link rel="stylesheet" href="/themes/editorial.css">
+  <link rel="stylesheet" href="/themes/blueprint.css">
+</head>
+<body>
+  <header class="strip" id="strip"></header>
+  <div class="grid">
+    <main>
+      <div class="hero" id="hero"></div>
+      <div id="sections"></div>
+    </main>
+    <aside class="rail">
+      <div id="rail-top"></div>
+      <form id="composer" class="composer-form" hidden>
+        <div class="composer-anchor" id="composer-anchor"></div>
+        <textarea id="composer-body" rows="3" placeholder="Comment…  (⌘⏎ to save)"></textarea>
+        <label class="sugg" id="sugg-toggle" hidden><input type="checkbox" id="composer-suggest"> Suggest replacement text</label>
+        <textarea id="composer-replacement" rows="2" hidden></textarea>
+        <div class="actions"><button type="submit" class="btn yes">Save draft</button><button type="button" class="btn" data-act="cancel-comment">Cancel</button></div>
+      </form>
+      <button id="add-comment" class="composer" data-act="open-composer">Add a comment… <span class="kbd">C</span></button>
+      <div id="rail-bottom"></div>
+    </aside>
+  </div>
+  <button id="sel-comment" class="sel-comment" data-act="comment-selection" hidden>💬 Comment</button>
+  <div id="toast" class="toast" role="status" hidden></div>
+  <script type="module" src="/app.mjs"></script>
+</body>
+</html>

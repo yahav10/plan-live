@@ -1,0 +1,27 @@
+[data-theme="editorial"] {
+  --font-body: 'Source Serif 4', Georgia, serif; --font-display: Fraunces, Georgia, serif; --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+  --display-w: 800; --display-ls: -.02em; --h-w: 600; --r: 4px;
+}
+[data-theme="editorial"][data-mode="light"] {
+  --bg: #f7f3ea; --card: #fffdf8; --rail: #f1ebdf; --ink: #1d1a16; --ink-2: #4a443b; --muted: #6c6353;
+  --line: #e4dccb; --line-strong: #cfc4ae; --accent: #c2410c; --accent-ink: #a8380a; --accent-soft: #fbe9dc;
+  --ok: #2a6e46; --warn: #8c5a12; --note: #6d32d6; --note-soft: #efe7fd; --chip: #efe8da; --hover: #faf5ea;
+  --track: #ebe3d3; --node: #fffdf8; --node-stroke: #cfc4ae; --edge: #b5a98f;
+  --del: #9f1d1d; --del-bg: #fbe4e1; --add: #1f6b3e; --add-bg: #e2f3e6;
+  --apply-bg: #1d1a16; --apply-ink: #f7f3ea; --apply-shadow: 0 6px 0 -2px #c2410c; --sticky: #fff9e6; --sticky-line: #eadfb8;
+}
+[data-theme="editorial"][data-mode="dark"] {
+  --bg: #17140f; --card: #211d16; --rail: #1b1812; --ink: #f1e9d8; --ink-2: #cfc3aa; --muted: #a39780;
+  --line: #332c21; --line-strong: #4a4030; --accent: #f08a4b; --accent-ink: #f59a62; --accent-soft: rgba(240,138,75,.12);
+  --ok: #6cc58f; --warn: #e2b04a; --note: #b69bff; --note-soft: rgba(182,155,255,.14); --chip: #2b261d; --hover: #1f1b14;
+  --track: #2e281e; --node: #211d16; --node-stroke: #4a4030; --edge: #6e6250;
+  --del: #ff9f95; --del-bg: rgba(255,100,90,.1); --add: #8fdcaa; --add-bg: rgba(108,197,143,.1);
+  --apply-bg: #f1e9d8; --apply-ink: #17140f; --apply-shadow: 0 6px 0 -2px #f08a4b; --sticky: #2a2418; --sticky-line: #3d3423;
+}
+[data-theme="editorial"] body { background-image: radial-gradient(color-mix(in srgb, var(--ink) 6%, transparent) 1px, transparent 1px); background-size: 4px 4px; }
+[data-theme="editorial"] h1.title { font-size: 44px; font-style: italic; }
+[data-theme="editorial"] .card > h2::before { content: "§ "; color: var(--accent); font-weight: 400; }
+[data-theme="editorial"] .cb { border-radius: 3px; }
+[data-theme="editorial"] .cmt { border-left-width: 1px; border-radius: 2px; transform: rotate(-.4deg); background: var(--sticky); border-color: var(--sticky-line); }
+[data-theme="editorial"] .cmt:nth-child(odd) { transform: rotate(.5deg); }
+[data-theme="editorial"] .apply { border-radius: 3px; letter-spacing: .02em; }

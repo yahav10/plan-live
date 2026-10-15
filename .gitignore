@@ -1,0 +1,6 @@
+node_modules/
+.superpowers/
+*.review.json
+test-results/
+playwright-report/
+test/fixtures/private/
