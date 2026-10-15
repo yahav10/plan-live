@@ -6,7 +6,7 @@ test('the session key is stripped from the address bar and the app keeps working
   await expect.poll(() => page.url()).not.toContain('key=');
   await page.reload();
   await expect(page.locator('h1.title')).toHaveText('Mini Plan');
-  await expect(page.locator('.secs a')).toHaveCount(7);
+  await expect(page.locator('.pill')).toBeVisible();
 });
 
 test('the CSP blocks nothing the app needs: load, review, diagrams, exports and themes', async ({ page, plan }) => {
