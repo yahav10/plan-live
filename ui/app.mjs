@@ -7,12 +7,13 @@ import { visual } from './components/visual.mjs';
 import { hydrateMermaid } from './components/mermaid.mjs';
 import { attachPanZoom } from './components/dag.mjs';
 import { renderRail, anchorLabel } from './components/review.mjs';
+import { filterSections, renderJumpRows } from './components/jump.mjs';
 import { exportName, toCsv, reviewMarkdown, download, diagramSvg, svgToPng, standaloneHtml } from './export.mjs';
 
 const calm = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 const smooth = () => (calm() ? 'auto' : 'smooth');
 
-export const state = { plan: null, review: { comments: [], batches: [], revisions: [] }, choice: null, online: false, active: null, anchor: null, selAnchor: null, composing: null, prev: new Map(), checked: new Map(), seen: new Set() };
+export const state = { plan: null, review: { comments: [], batches: [], revisions: [] }, choice: null, online: false, active: null, anchor: null, selAnchor: null, composing: null, jump: { open: false, q: '', act: 0 }, scroll: 0, prev: new Map(), checked: new Map(), seen: new Set() };
 export const hooks = {
   visual,
   afterSections: (root, mode) => {
@@ -86,6 +87,13 @@ function trackActive() {
   const passed = cards.filter(c => c.getBoundingClientRect().top <= 120);
   const current = passed.at(-1) ?? cards[0];
   if (current) setActive(current.dataset.sec);
+  const max = document.documentElement.scrollHeight - innerHeight;
+  state.scroll = max > 0 ? Math.min(1, Math.max(0, scrollY / max)) : 0;
+  paintScroll();
+}
+
+function paintScroll() {
+  document.querySelector('.pill')?.style.setProperty('--scroll', state.scroll.toFixed(3));
 }
 let scrollTick = false;
 addEventListener('scroll', () => {
@@ -97,9 +105,84 @@ addEventListener('scroll', () => {
 function setActive(id) {
   if (id === 'intro' || state.active === id) return;
   state.active = id;
-  document.querySelectorAll('.secs a').forEach(a => a.classList.toggle('on', a.dataset.sec === id));
-  document.querySelector(`.secs a[data-sec="${CSS.escape(id)}"]`)?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  if (!state.plan) return;
+  const swap = () => {
+    setHTML($('strip'), renderStrip(state));
+    paintScroll();
+    if (state.jump.open) paintJump();
+  };
+  const label = document.querySelector('.pill .ptxt');
+  if (calm() || !label) { swap(); return; }
+  label.classList.add('swap');
+  setTimeout(() => {
+    swap();
+    const next = document.querySelector('.pill .ptxt');
+    next?.classList.add('swap');
+    requestAnimationFrame(() => requestAnimationFrame(() => next?.classList.remove('swap')));
+  }, 120);
 }
+
+const jumpMatches = () => filterSections(state.plan.model.sections, state.jump.q);
+
+function paintJump() {
+  const { sections } = state.plan.model;
+  const matches = jumpMatches();
+  state.jump.act = Math.min(state.jump.act, Math.max(0, matches.length - 1));
+  const list = $('jump').querySelector('.jlist');
+  list.innerHTML = renderJumpRows({ sections, active: state.active, matches, act: state.jump.act });
+  list.querySelector('.act')?.scrollIntoView({ block: 'nearest' });
+}
+
+function openJump() {
+  if (!state.plan) return;
+  const matches = filterSections(state.plan.model.sections, '');
+  state.jump = { open: true, q: '', act: Math.max(0, matches.findIndex(i => state.plan.model.sections[i].id === state.active)) };
+  const panel = $('jump');
+  panel.hidden = false;
+  panel.querySelector('.jq').value = '';
+  $('spine-toggle').checked = !!state.spine;
+  paintJump();
+  setHTML($('strip'), renderStrip(state));
+  paintScroll();
+  panel.classList.remove('in');
+  requestAnimationFrame(() => panel.classList.add('in'));
+  panel.querySelector('.jq').focus();
+}
+
+function closeJump(returnFocus = true) {
+  if (!state.jump.open) return;
+  state.jump.open = false;
+  $('jump').hidden = true;
+  $('jump').classList.remove('in');
+  setHTML($('strip'), renderStrip(state));
+  paintScroll();
+  if (returnFocus) document.querySelector('.pill')?.focus();
+}
+
+const toggleJump = () => (state.jump.open ? closeJump() : openJump());
+
+function jumpTo(id) {
+  closeJump();
+  setActive(id);
+  go(id);
+}
+
+$('jump').addEventListener('keydown', e => {
+  const matches = jumpMatches();
+  if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+    e.preventDefault();
+    state.jump.act = Math.min(matches.length - 1, Math.max(0, state.jump.act + (e.key === 'ArrowDown' ? 1 : -1)));
+    paintJump();
+  } else if (e.key === 'Enter' && matches.length) {
+    e.preventDefault();
+    jumpTo(state.plan.model.sections[matches[state.jump.act]].id);
+  }
+});
+$('jump').querySelector('.jq').addEventListener('input', e => {
+  state.jump.q = e.target.value;
+  state.jump.act = 0;
+  paintJump();
+});
 
 export function render() {
   if (!state.plan) return;
@@ -108,6 +191,7 @@ export function render() {
   applyTheme(state.choice);
   document.title = state.plan.model.title || state.plan.file;
   setHTML($('strip'), renderStrip(state));
+  paintScroll();
   setHTML($('hero'), renderHero(state));
   if (setHTML($('sections'), renderSections(state, hooks.visual))) {
     markChanged();
@@ -117,6 +201,7 @@ export function render() {
   setHTML($('rail-top'), rail.top);
   setHTML($('rail-bottom'), rail.bottom);
   markMotion();
+  if (state.jump.open) paintJump();
 }
 
 function updateLive() {
@@ -235,6 +320,7 @@ addEventListener('afterprint', () => {
 });
 
 export const actions = {
+  'jump-toggle': toggleJump,
   'theme-menu': () => toggleMenu('theme-menu'),
   'export-menu': () => toggleMenu('export-menu'),
   export: el => { $('export-menu').hidden = true; runExport(el.dataset.fmt); },
@@ -251,11 +337,14 @@ document.addEventListener('click', e => {
   if (actEl && actions[actEl.dataset.act]) { e.preventDefault(); actions[actEl.dataset.act](actEl, e); return; }
   const goto = e.target.closest('[data-goto]');
   if (goto) { go(goto.dataset.goto); return; }
-  const stripTab = e.target.closest('.secs a');
-  if (stripTab) { e.preventDefault(); setActive(stripTab.dataset.sec); go(stripTab.dataset.sec); }
+  const row = e.target.closest('#jump [data-jump]');
+  if (row) { jumpTo(row.dataset.jump); return; }
+  if (state.jump.open && !e.target.closest('#jump')) closeJump(false);
 });
 
 document.addEventListener('keydown', e => {
+  if ((e.metaKey || e.ctrlKey) && !e.altKey && e.key.toLowerCase() === 'k') { e.preventDefault(); toggleJump(); return; }
+  if (e.key === 'Escape' && state.jump.open) { e.preventDefault(); closeJump(); return; }
   if (!state.plan || e.target.closest('input, textarea, [contenteditable]') || e.metaKey || e.ctrlKey || e.altKey) return;
   const fn = keymap[e.key.toLowerCase()] ?? (e.key === 'Enter' ? keymap.enter : null);
   if (fn) { e.preventDefault(); fn(); }

@@ -38,11 +38,12 @@ test('theme choice precedence: url > storage > defaults > built-in', () => {
   assert.equal(nextTheme('blueprint'), 'aurora');
 });
 
-test('strip: one tab per section, active marked, progress var, compact age', () => {
+test('strip: one pill for the active section, no tab row, compact age', () => {
   const html = renderStrip(state());
-  assert.equal((html.match(/data-sec=/g) ?? []).length, model.sections.length);
-  assert.match(html, /class="on[^"]*"[^>]*data-sec="task-1-parser"|data-sec="task-1-parser"[^>]*class="on/);
-  assert.match(html, /--p:50/);
+  assert.equal((html.match(/class="pill"/g) ?? []).length, 1);
+  assert.ok(!html.includes('data-sec='));
+  assert.ok(!html.includes('class="secs"'));
+  assert.match(html, /Task 1: Parser/);
   assert.match(html, /title="Updated 4s ago by Claude"/);
   assert.equal(fmtAge(4200), '4s');
   assert.equal(fmtAge(185_000), '3m');

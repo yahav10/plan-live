@@ -12,6 +12,12 @@
 </head>
 <body>
   <header class="strip" id="strip"></header>
+  <div id="jump" class="jump" role="dialog" aria-label="Jump to section" hidden>
+    <input class="jq" type="text" placeholder="Jump to a section" aria-label="Filter sections" autocomplete="off" spellcheck="false">
+    <div class="jlist" role="listbox" aria-label="Sections"></div>
+    <label class="jswitch"><input type="checkbox" id="spine-toggle"> Reading spine</label>
+  </div>
+  <div id="spine" class="spine" hidden></div>
   <div class="grid">
     <main>
       <div class="hero" id="hero"></div>

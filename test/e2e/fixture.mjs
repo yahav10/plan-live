@@ -28,3 +28,7 @@ export const test = base.extend({
   },
 });
 export { expect } from '@playwright/test';
+export const openJump = async page => {
+  await page.locator('.pill').click();
+  await page.locator('#jump .jq').waitFor();
+};

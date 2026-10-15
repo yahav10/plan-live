@@ -1,4 +1,4 @@
-import { test, expect } from './fixture.mjs';
+import { test, expect, openJump } from './fixture.mjs';
 
 const style = (page, sel, prop) => page.locator(sel).first().evaluate((el, p) => getComputedStyle(el)[p], prop);
 
@@ -18,7 +18,9 @@ test('cards rise in once on first load and never replay on live updates', async 
   expect(await style(page, '#sections .card', 'animationName')).toBe('rise');
   await expect(page.locator('body')).not.toHaveClass(/intro/, { timeout: 4000 });
   plan.write(plan.read() + '\n## Later\ntext\n');
-  await expect(page.locator('.secs a', { hasText: 'Later' })).toBeVisible();
+  await openJump(page);
+  await expect(page.locator('#jump .jrow', { hasText: 'Later' })).toBeVisible();
+  await page.keyboard.press('Escape');
   await expect(page.locator('body')).not.toHaveClass(/intro/);
   expect(await style(page, '#sections .card', 'animationName')).not.toBe('rise');
 });
@@ -33,11 +35,11 @@ test('reduced motion disables the entrance and ring animations', async ({ browse
   await ctx.close();
 });
 
-test('ring and strip underlines sweep from zero on first load', async ({ page, plan }) => {
+test('ring and pill arc sweep from zero on first load', async ({ page, plan }) => {
   await page.goto(plan.url);
   await expect(page.locator('body')).toHaveClass(/intro/);
   expect(await style(page, '.ring', 'animationName')).toBe('ring-sweep');
-  expect(await style(page, '.secs a', 'animationName')).toBe('ring-sweep');
+  expect(await style(page, '.pill', 'animationName')).toBe('pill-in');
 });
 
 test('a toggled checkbox pops once', async ({ page, plan }) => {
@@ -79,6 +81,7 @@ test('theme switch cross-fades colours briefly', async ({ page, plan }) => {
 
 test('jumping to a section flashes it', async ({ page, plan }) => {
   await page.goto(plan.url);
-  await page.locator('.secs a', { hasText: 'Notes' }).click();
+  await openJump(page);
+  await page.locator('#jump .jrow', { hasText: 'Notes' }).click();
   await expect(page.locator('#notes.landed')).toHaveCount(1);
 });
