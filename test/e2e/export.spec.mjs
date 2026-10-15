@@ -69,6 +69,7 @@ test('standalone HTML export renders on its own with fonts inlined and no script
   expect(html).toContain('data-theme="editorial"');
   expect(html).toMatch(/@font-face[^}]*base64,/);
   expect(html).not.toMatch(/<script/i);
+  expect(html).toContain('http-equiv="Content-Security-Policy"');
   expect(html).not.toContain('Apply comments');
   expect(html).not.toContain('class="rail"');
   const offline = await browser.newPage();
