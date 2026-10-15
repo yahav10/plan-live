@@ -1,28 +1,37 @@
 <div align="center">
 
-# plan-live
+<img src="docs/banner.svg" alt="plan-live: your markdown plan, live, visual and reviewable with Claude" width="100%">
 
-**Turn the markdown plan Claude wrote into a live, interactive page, and review it with Claude in the loop.**
+<br>
 
-![license MIT](https://img.shields.io/badge/license-MIT-blue)
-![node >=20](https://img.shields.io/badge/node-%E2%89%A520-339933)
-![claude code plugin](https://img.shields.io/badge/Claude%20Code-plugin-d97757)
-![platform](https://img.shields.io/badge/macOS%20%C2%B7%20Linux-supported-lightgrey)
-![deps](https://img.shields.io/badge/runtime%20deps-0-brightgreen)
+[![Release](https://img.shields.io/github/v/release/yahav10/plan-live?color=8b7bff&label=release)](https://github.com/yahav10/plan-live/releases)
+![License MIT](https://img.shields.io/badge/license-MIT-blue)
+![Node 20+](https://img.shields.io/badge/node-%E2%89%A520-339933)
+![Claude Code plugin](https://img.shields.io/badge/Claude%20Code-plugin-d97757)
+![Platform](https://img.shields.io/badge/macOS%20%C2%B7%20Linux-supported-lightgrey)
+![Runtime dependencies: 0](https://img.shields.io/badge/runtime%20deps-0-brightgreen)
 
-<img src="docs/screenshots/hero-aurora-dark.png" alt="plan-live showing a plan in the Aurora theme" width="860">
+**[Install](#install)** · **[Quickstart](#quickstart)** · **[How it works](#how-the-loop-works)** · **[Tour](#a-quick-tour)** · **[Export](#export-everything)** · **[Themes](#themes)** · **[Write better plans](#write-plans-that-shine)** · **[FAQ](#faq)**
+
+<br>
+
+<img src="docs/screenshots/demo.gif" alt="plan-live in action: jump between tasks, write a comment, press Apply, switch themes, open the export menu" width="860">
 
 </div>
 
 ## Why
 
-Plans in markdown are easy for Claude to write and hard for you to read. plan-live renders any plan as a page you can scan, and closes the loop: **comment, press Apply, and Claude revises the plan while you watch.**
+Claude writes great plans in markdown. Reading a 400-line `.md` to review them is another story.
 
-- **Live.** The page updates within a second of any edit to the `.md`.
-- **Two-way.** Comment on a section, a task or selected text. Apply sends the batch to Claude without you typing a prompt.
-- **Reviewable.** Every change comes back as a diff. Accept keeps it. Reject puts the old text back in the file.
-- **Yours.** The `.md` stays the source of truth. Nothing leaves your machine: the server listens on `127.0.0.1` behind a per-session key.
-- **Good to look at.** Three themes, each in light and dark.
+| Without plan-live | With plan-live |
+|---|---|
+| Scroll a wall of text and lose your place | Sticky section strip, progress per task, dependency graph |
+| Reply in chat: "in step 3, change…" | Comment on the exact task or selected text |
+| Hope Claude edits the right lines | Every change comes back as a diff you **Accept** or **Reject** |
+| Re-read the file to see what moved | The page updates the moment the file changes, and flashes what changed |
+| Send a markdown file to a teammate | Export a styled web page, PDF, CSV or diagram images |
+
+The `.md` stays the **source of truth**. plan-live is a viewer and review loop on top of it, never a replacement.
 
 ## Install
 
@@ -31,108 +40,251 @@ Plans in markdown are easy for Claude to write and hard for you to read. plan-li
 /plugin install plan-live@plan-live
 ```
 
-Restart the session so the hooks load. Needs **Node 20+**. No `npm install`, no account, no network after install.
+Restart the session so the hooks load. You need **Node 20 or newer**. There is no `npm install`, no account and no network use after install.
 
 ## Quickstart
 
-1. Ask Claude for a plan, or point at one you have: `/plan-live docs/plans/my-plan.md`
-2. Your browser opens. Click **Comment** on any section, task or selected text, and write what should change.
-3. Press **Apply** (`⏎`). Claude is woken, edits the plan, and the page shows a diff for each comment. **Accept** or **Reject**.
+1. **Open a plan.** Ask Claude for one, or point at a file you have:
 
-```
-/plan-live docs/plans/my-plan.md
-/plan-live docs/plans/my-plan.md --theme blueprint --mode dark
-```
+   ```
+   /plan-live docs/plans/my-plan.md
+   ```
 
-## How it works
+   With no argument it opens the newest `docs/superpowers/plans/*.md`.
+2. **Comment.** Click a task or a section, or select any text, then press `C` and write what should change. Tick `Suggest replacement text` to propose exact wording.
+3. **Apply.** Press **Apply** (`⏎`). Claude is woken, edits the plan, and each change comes back as a diff in the review rail. **Accept** keeps it. **Reject** puts the old text back in your file.
+
+<div align="center">
+<img src="docs/screenshots/review-rail.png" alt="The review rail: drafts, comments with Claude, Claude's diffs and resolved history" width="360">
+</div>
+
+## How the loop works
 
 ```mermaid
-flowchart LR
-  P[plan.md] -- fs.watch --> S[local server 127.0.0.1]
-  S -- live updates --> B[browser page]
-  B -- comments + Apply --> S
-  S -- batch wakes --> C[Claude Code]
-  C -- edits --> P
-  S -- review state --> R[plan.review.json]
+sequenceDiagram
+  actor You
+  participant Page as Live page
+  participant Server as Local server
+  participant Watcher as Background watcher
+  participant Claude
+  participant File as plan.md
+  You->>Page: Comment, press Apply
+  Page->>Server: queue the batch
+  Server-->>Watcher: batch ready
+  Watcher-->>Claude: exits with the comments
+  Claude->>File: edits the plan
+  Claude->>Server: resolve each comment
+  File-->>Page: live update
+  Page->>You: diff per comment
+  You->>Page: Accept or Reject
+  Page->>File: Reject restores the old text
 ```
 
-The page never edits your plan on its own, except for two things you asked for explicitly: ticking a checkbox, and rejecting a change. Review state lives beside the plan in `<plan>.review.json`, so add it to `.gitignore` or commit it, your call.
+- **No typing to wake Claude.** `/plan-live` starts a background watcher. When you press Apply it exits, and that wakes Claude with your comments. If no watcher is running, your next prompt carries them instead.
+- **Claude can't skip a comment.** A hook blocks the end of Claude's turn once while comments are unresolved.
+- **Rejections are remembered.** Claude is told what you rejected, once, so it doesn't re-apply it.
+- **Your edits are safe.** Every write re-reads the file first, so a checkbox toggle or a Reject never overwrites an edit Claude just made.
 
-## What you get
-
-| | |
-|---|---|
-| **Sections strip** | One-word tabs with a progress underline, always in view |
-| **Task cards** | Checkboxes you can tick from the page, with per-task progress |
-| **Dependency graph** | Built from "depends on / after / blocked by" phrases in your tasks |
-| **Approach cards** | Side-by-side options with effort, pros, cons and the pick |
-| **Architecture diagram** | From a small `architecture` block, or any Mermaid block |
-| **Review rail** | Draft, queued, picked up, resolved or declined, per comment |
-| **Diff per change** | Accept or Reject each change Claude made for a comment |
-| **Themes** | Aurora, Editorial, Blueprint, each light and dark (`T`, `D`) |
-| **Export** | Markdown, standalone HTML (fonts inlined, no scripts), PDF via print, copy as Markdown, plan model JSON, tasks CSV, review notes (Markdown/JSON), and SVG or PNG for every diagram |
-| **Motion** | Smooth scrolling, staggered entrance, progress that sweeps and counts up, checkbox pops, comments that slide in. Off under reduced-motion |
-
-Works on any markdown plan. Plans with `### Task N` headings and `- [ ]` steps get the most from it.
-
-## Themes
+## A quick tour
 
 <table>
 <tr>
-<td align="center"><img src="docs/screenshots/hero-aurora-dark.png" width="280"><br><b>Aurora</b></td>
-<td align="center"><img src="docs/screenshots/hero-editorial-light.png" width="280"><br><b>Editorial</b></td>
-<td align="center"><img src="docs/screenshots/hero-blueprint-dark.png" width="280"><br><b>Blueprint</b></td>
+<td width="50%" valign="top">
+
+**Dependency graph**<br>
+Built from phrases like "depends on Task 1", "after T2" or "blocked by T4". The active task glows.
+
+<img src="docs/screenshots/graph.png" alt="Dependency graph with the active task highlighted">
+
+</td>
+<td width="50%" valign="top">
+
+**Task cards**<br>
+Real checkboxes you can tick from the page. They write `[x]` into your file, with per-section progress.
+
+<img src="docs/screenshots/tasks.png" alt="Task card with checkboxes and a code block">
+
+</td>
+</tr>
+<tr>
+<td colspan="2" valign="top">
+
+**Options side by side**<br>
+An <code>approaches</code> block becomes comparison cards with effort, pros, cons and a recommended pick.
+
+<img src="docs/screenshots/approaches.png" alt="Three approach cards with the recommended one highlighted">
+
+</td>
+</tr>
+<tr>
+<td width="50%" valign="top">
+
+**Architecture diagrams**<br>
+Write `Browser -> Web : HTTPS` lines. Zoom, pan, click a box to trace its connections.
+
+<img src="docs/screenshots/architecture.png" alt="Architecture diagram">
+
+</td>
+<td width="50%" valign="top">
+
+**Mermaid, rendered**<br>
+Flowcharts and sequence diagrams render from a bundled copy of Mermaid, offline.
+
+<img src="docs/screenshots/flow.png" alt="Mermaid flowchart">
+
+</td>
 </tr>
 </table>
 
-Pick one in the top bar, with `--theme` and `--mode`, or set a default in `~/.claude/plan-live.json`:
+Everything animates with purpose (a staggered entrance, a progress ring that sweeps, checkboxes that pop, comments that slide in) and goes completely still if your OS asks for **reduced motion**.
+
+## Export everything
+
+Open **Export** in the top bar. Every diagram also shows **SVG** and **PNG** buttons when you hover it.
+
+<div align="center">
+<img src="docs/screenshots/export-menu.png" alt="The export menu" width="300">
+</div>
+
+| Export | You get |
+|---|---|
+| **Markdown** | The plan file, byte for byte |
+| **Web page** | One self-contained `.html` in your current theme. Fonts are inlined and there are no scripts, so it opens anywhere |
+| **PDF** | Opens your browser's print dialog with the chrome hidden, always in light colours |
+| **Copy as Markdown** | The source, on your clipboard |
+| **Plan model** | The parsed plan as `.json` |
+| **Tasks** | Every step as `.csv` (section, task, done, line). Formula-looking cells are neutralised |
+| **Review notes** | Resolved, declined, with Claude, drafts and Claude's changes as `.md` or `.json` |
+| **Diagrams** | Each graph or diagram as a styled `.svg` or a 2x `.png` |
+
+## Themes
+
+Three themes, each in light and dark. Switch from the top bar or press `T` and `D`.
+
+<table>
+<tr>
+<td align="center" width="33%"><img src="docs/screenshots/hero-aurora-dark.png" alt="Aurora dark"><br><b>Aurora</b><br><sub>gradient glow, soft glass</sub></td>
+<td align="center" width="33%"><img src="docs/screenshots/hero-editorial-light.png" alt="Editorial light"><br><b>Editorial</b><br><sub>serif type, paper, sticky-note comments</sub></td>
+<td align="center" width="33%"><img src="docs/screenshots/hero-blueprint-dark.png" alt="Blueprint dark"><br><b>Blueprint</b><br><sub>drafting grid, corner brackets, marching dashes</sub></td>
+</tr>
+</table>
+
+Every text colour in every theme and mode passes the WCAG AA 4.5:1 contrast test, and that is checked in the test suite. Set your default in `~/.claude/plan-live.json`:
 
 ```json
 { "theme": "editorial", "mode": "auto" }
 ```
 
-Precedence: URL, then your last choice in the browser, then flags, then that file, then Aurora in auto mode.
+Precedence: URL parameters, then your last choice in the browser, then `--theme` and `--mode`, then that file, then Aurora in auto mode.
 
-## Richer visuals in your plan
+## Write plans that shine
+
+plan-live renders any markdown. These conventions unlock more.
+
+<table>
+<tr>
+<td valign="top" width="50%">
+
+````markdown
+## Goals
+- Cut checkout time to under 30s
+
+### Task 1: Totals service
+- [x] **Step 1: Write the failing test**
+- [ ] **Step 2: Implement**
+
+### Task 2: Checkout API
+Depends on Task 1.
+- [ ] **Step 1: Contract test**
+````
+
+</td>
+<td valign="top" width="50%">
 
 ````markdown
 ```approaches
-name: Local server
+name: One-page checkout
 effort: M
 pick: yes
-+ Live reload
-- One more process
++ Fewest clicks
+- Bigger first release
 ```
 
 ```architecture
-Browser -> Server : SSE
-Server -> Plan : fs.watch
+Browser -> Web : HTTPS
+Web -> API : REST
 ```
 ````
 
-Mermaid code blocks render as diagrams. Tasks that say "depends on Task 1", "after T2" or "blocked by T4" appear in the dependency graph.
+</td>
+</tr>
+</table>
 
-## Keyboard
+- `### Task N: …` headings become their own section (tabs read `T1`, `T2`…).
+- "depends on", "after" and "blocked by" followed by `Task 1` or `T1` draw the dependency graph.
+- <code>```approaches</code> and <code>```architecture</code> blocks become cards and diagrams, and a <code>```mermaid</code> block renders as a diagram. Anything else in a fence stays plain code: `#`, `- [ ]` and `|` lines inside fences are never parsed as headings, tasks or tables.
+- `<!-- short: Graph -->` under a heading sets its tab label.
+- Metadata lines like `**Ticket:** https://…` become chips in the header.
+
+Want to see everything at once? Open the bundled example:
+
+```
+/plan-live docs/examples/demo-plan.md
+```
+
+## Reference
+
+**Command**
+
+```
+/plan-live [plan.md] [--theme aurora|editorial|blueprint] [--mode auto|light|dark]
+```
+
+**Keyboard**
 
 | Key | Action |
 |---|---|
-| `C` | Comment on the focused section |
+| `C` | Comment on the focused section or task |
 | `⏎` | Apply draft comments |
 | `J` / `K` | Next / previous section |
-| `T` / `D` | Cycle theme / toggle light, dark |
+| `T` / `D` | Cycle theme / cycle light, dark, auto |
+
+**CLI** (what the plugin runs for you; handy for scripting)
+
+```
+node bin/plan-live.mjs serve   <plan.md> [--open] [--theme t] [--mode m]
+node bin/plan-live.mjs watch   <plan.md>
+node bin/plan-live.mjs resolve <plan.md> <commentId> --status resolved|declined --note "…"
+node bin/plan-live.mjs status  <plan.md>
+node bin/plan-live.mjs stop    <plan.md>
+```
+
+**Comment states:** `draft` (yours, editable) → `queued` (sent to Claude) → `resolved` or `declined` (with Claude's note). Claude's edits show up as revisions you accept or reject.
+
+## Privacy and safety
+
+- The server listens on **127.0.0.1 only**, on a random port, and every request needs a random per-session key.
+- Requests with a foreign `Host` or `Origin` are refused, so other web pages can't drive it.
+- Plan text is rendered as inert text: HTML and `javascript:` links in a plan can't run. Mermaid runs in strict mode.
+- Review state lives next to your plan in `<plan>.review.json`. Add it to `.gitignore` unless you want the review history in git.
+- Nothing is sent anywhere. The only network use is `/plugin install`.
 
 ## FAQ
 
 <details><summary>Does it change my plan file?</summary>
-Only when you tick a checkbox, reject a change, or when Claude edits it in answer to your comments. Everything else is read-only.
-</details>
-
-<details><summary>Is it safe to run?</summary>
-The server binds to 127.0.0.1 on a random port and requires a random 32-byte key on every request. It serves only the plan you opened. Plan content is rendered as inert text, never as HTML or script.
+Only in three cases: you tick a checkbox, you reject a change, or Claude edits the plan to answer your comments. Everything else is read-only.
 </details>
 
 <details><summary>Does Claude really react without me typing?</summary>
-Yes. `/plan-live` starts a background watcher. Apply makes it exit, which wakes Claude with your comments. If the watcher is not running, your next prompt carries the comments instead.
+Yes. Apply makes the background watcher exit, and that wakes Claude with your comments. If the watcher isn't running, your next prompt carries the comments.
+</details>
+
+<details><summary>Does it work with plans that aren't from superpowers?</summary>
+Yes, any markdown works. Plans with <code>### Task N</code> headings and <code>- [ ]</code> steps get the most out of it (progress, graph).
+</details>
+
+<details><summary>Can I share a plan with someone who doesn't use Claude Code?</summary>
+Export a <b>Web page</b> or a <b>PDF</b>. The web page is one file with fonts and styles inlined.
 </details>
 
 <details><summary>Windows?</summary>
@@ -143,20 +295,21 @@ Not tested yet. macOS and Linux are supported. Reports and fixes are welcome.
 
 | Symptom | Fix |
 |---|---|
-| Browser did not open | Run `/plan-live` again, or open the URL it prints |
-| Server fails to start with a syntax or `fetch` error | Node is older than 20. Upgrade it, then restart the session |
-| Page says "offline" | The server stopped. Run `/plan-live` again |
+| Browser didn't open | Run `/plan-live` again, or open the URL it prints |
+| Server fails to start with a syntax or `fetch` error | Your Node is older than 20. Upgrade it, then restart the session |
+| The page says "offline" | The server stopped. Run `/plan-live` again |
 | Apply is greyed out | Apply sends draft comments. Add one first (`C`) |
-| Hooks seem inactive | Restart the Claude Code session after install |
+| Hooks seem inactive | Restart the Claude Code session after installing |
+| "missing or wrong key" | You opened an old URL. Run `/plan-live` again for a fresh one |
 
 ## Develop
 
 ```
 git clone https://github.com/yahav10/plan-live && cd plan-live
 npm install
-npm run vendor
-npm test
-npm run test:e2e
+npm run vendor      # copies fonts and Mermaid into ui/vendor
+npm test            # unit tests
+npm run test:e2e    # browser tests
 ```
 
 Try your checkout without publishing:
@@ -166,7 +319,9 @@ Try your checkout without publishing:
 /plugin install plan-live@plan-live
 ```
 
-Design and decisions: [`docs/superpowers/specs/`](docs/superpowers/specs/2026-10-08-plan-live-design.md).
+Regenerate the README visuals from the bundled example plan with `npm run screenshots` and `npm run demo-gif` (the GIF needs `ffmpeg`).
+
+Design notes and decisions live in [`docs/superpowers/specs/`](docs/superpowers/specs/2026-10-08-plan-live-design.md).
 
 ## License
 

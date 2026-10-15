@@ -1,39 +1,41 @@
-import { mkdtempSync, copyFileSync } from 'node:fs';
-import { join } from 'node:path';
-import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { chromium } from '@playwright/test';
-import { createPlanServer } from '../server/serve.mjs';
+import { demoServer } from './demo-state.mjs';
 
-const root = fileURLToPath(new URL('..', import.meta.url));
-const dir = mkdtempSync(join(tmpdir(), 'plan-live-shots-'));
-const plan = join(dir, 'plan.md');
-copyFileSync(`${root}test/fixtures/superpowers-style.md`, plan);
-
-const srv = await createPlanServer({ planPath: plan });
+const out = fileURLToPath(new URL('../docs/screenshots/', import.meta.url));
+const { srv } = await demoServer();
 const browser = await chromium.launch();
-const page = await browser.newPage({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 2, reducedMotion: 'reduce' });
-const shoot = async (name, theme, mode, prep) => {
+const page = await browser.newPage({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1.5, reducedMotion: 'reduce' });
+
+const open = async (theme, mode) => {
   await page.goto(`${srv.url}&theme=${theme}&mode=${mode}`);
   await page.locator('h1.title').waitFor();
   await page.evaluate(() => document.fonts.ready);
-  await prep?.();
-  await page.screenshot({ path: `${root}docs/screenshots/${name}.png` });
+  await page.waitForTimeout(400);
+};
+const shot = async (name, target) => {
+  await (target ?? page).screenshot({ path: `${out}${name}.png` });
   console.log(name);
 };
 
-await shoot('hero-aurora-dark', 'aurora', 'dark');
-await shoot('hero-editorial-light', 'editorial', 'light');
-await shoot('hero-blueprint-dark', 'blueprint', 'dark');
-await shoot('graph', 'aurora', 'light', () => page.locator('svg.dag').first().scrollIntoViewIfNeeded());
-await shoot('review-rail', 'aurora', 'dark', async () => {
-  await page.locator('[data-task] .t').first().click();
-  await page.keyboard.press('c');
-  await page.locator('#composer-body').fill('Add a streaming option to the export endpoint');
-  await page.locator('#composer button[type=submit]').click();
-  await page.locator('#rail-top .cmt').waitFor();
-  await page.locator('#composer').waitFor({ state: 'hidden' });
-});
+await open('aurora', 'dark');
+await shot('hero-aurora-dark');
+await shot('graph', page.locator('.graph-card'));
+await shot('tasks', page.locator('#task-2-checkout-api'));
+await shot('approaches', page.locator('#options'));
+await shot('architecture', page.locator('#architecture'));
+await shot('flow', page.locator('#flow'));
+await shot('review-rail', page.locator('.rail'));
+await page.locator('[data-act=export-menu]').click();
+await page.waitForTimeout(300);
+await shot('export-menu', { screenshot: o => page.screenshot({ ...o, clip: { x: 980, y: 0, width: 460, height: 470 } }) });
+
+await open('editorial', 'light');
+await shot('hero-editorial-light');
+await open('blueprint', 'dark');
+await shot('hero-blueprint-dark');
+await open('aurora', 'light');
+await shot('hero-aurora-light');
 
 await browser.close();
 await srv.close();
