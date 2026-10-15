@@ -25,3 +25,7 @@
 [data-theme="editorial"] .cmt { border-left-width: 1px; border-radius: 2px; transform: rotate(-.4deg); background: var(--sticky); border-color: var(--sticky-line); }
 [data-theme="editorial"] .cmt:nth-child(odd) { transform: rotate(.5deg); }
 [data-theme="editorial"] .apply { border-radius: 3px; letter-spacing: .02em; }
+[data-theme="editorial"] .cmt { transition: transform .3s var(--spring), box-shadow .25s; }
+[data-theme="editorial"] .cmt:hover { transform: rotate(0) translateY(-3px); }
+[data-theme="editorial"] .card > h2::before { display: inline-block; transition: transform .3s var(--spring); }
+[data-theme="editorial"] .card:hover > h2::before { transform: translateX(4px); }

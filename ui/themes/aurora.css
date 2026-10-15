@@ -28,3 +28,7 @@
 [data-theme="aurora"] .ring { background: conic-gradient(#8b7bff, #47d7ff calc(var(--p) * .5%), #3ee0a7 calc(var(--p) * 1%), var(--track) 0); }
 [data-theme="aurora"] h1.title { background: var(--title-grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
 [data-theme="aurora"] .dag .node.doing rect { filter: drop-shadow(0 0 10px var(--accent)); }
+@keyframes drift { from { transform: translate3d(-3%, 0, 0) scale(1); } to { transform: translate3d(4%, 6%, 0) scale(1.12); } }
+@keyframes sheen { to { background-position: 100% 0; } }
+[data-theme="aurora"] body::before { animation: drift 22s ease-in-out infinite alternate; }
+[data-theme="aurora"] h1.title { background-size: 220% 100%; animation: sheen 10s ease-in-out infinite alternate; }

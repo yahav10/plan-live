@@ -38,3 +38,7 @@
   mask: radial-gradient(closest-side, transparent calc(100% - 9px), #000 calc(100% - 9px)), conic-gradient(#000 calc(var(--p) * 1%), rgba(0,0,0,.18) 0); mask-composite: intersect; }
 [data-theme="blueprint"] .cb, [data-theme="blueprint"] .cmt, [data-theme="blueprint"] .apply { border-radius: 0; }
 [data-theme="blueprint"] .apply { text-transform: uppercase; letter-spacing: .1em; font-size: 12px; }
+@keyframes march { to { stroke-dashoffset: -14; } }
+[data-theme="blueprint"] .card::before, [data-theme="blueprint"] .card::after { transition: width .25s var(--ease), height .25s var(--ease); }
+[data-theme="blueprint"] .card:hover::before, [data-theme="blueprint"] .card:hover::after { width: 18px; height: 18px; }
+[data-theme="blueprint"] .dag .node:not(.doing):not(.done) rect { animation: march 2.4s linear infinite; }

@@ -8,7 +8,10 @@ import { hydrateMermaid } from './components/mermaid.mjs';
 import { attachPanZoom } from './components/dag.mjs';
 import { renderRail, anchorLabel } from './components/review.mjs';
 
-export const state = { plan: null, review: { comments: [], batches: [], revisions: [] }, choice: null, online: false, active: null, anchor: null, selAnchor: null, composing: null, prev: new Map() };
+const calm = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+const smooth = () => (calm() ? 'auto' : 'smooth');
+
+export const state = { plan: null, review: { comments: [], batches: [], revisions: [] }, choice: null, online: false, active: null, anchor: null, selAnchor: null, composing: null, prev: new Map(), checked: new Map(), seen: new Set() };
 export const hooks = {
   visual,
   afterSections: (root, mode) => {
@@ -33,6 +36,47 @@ function markChanged() {
     if (!first && state.prev.get(key) !== sig) el.classList.add('pulse');
     state.prev.set(key, sig);
   }
+}
+
+function markMotion() {
+  const first = state.checked.size === 0 && state.seen.size === 0;
+  for (const li of document.querySelectorAll('#sections [data-task]')) {
+    const now = li.classList.contains('done');
+    if (!first && state.checked.has(li.dataset.task) && state.checked.get(li.dataset.task) !== now) {
+      li.classList.add('flip');
+      setTimeout(() => li.classList.remove('flip'), 700);
+    }
+    state.checked.set(li.dataset.task, now);
+  }
+  for (const el of document.querySelectorAll('#rail-top .cmt[data-comment], #rail-top .cmt[data-revision], #rail-bottom .cmt[data-comment], #rail-bottom .cmt[data-revision]')) {
+    const id = el.dataset.comment ?? el.dataset.revision;
+    if (state.seen.has(id)) continue;
+    state.seen.add(id);
+    if (document.body.classList.contains('intro')) continue;
+    el.classList.add('enter');
+    el.addEventListener('animationend', () => el.classList.remove('enter'), { once: true });
+    setTimeout(() => el.classList.remove('enter'), 1200);
+  }
+}
+
+function countUp(el, to) {
+  if (!el || calm()) return;
+  const t0 = performance.now(), dur = 1000;
+  const step = now => {
+    const k = Math.min(1, (now - t0) / dur);
+    el.textContent = `${Math.round(to * (1 - (1 - k) ** 3))}%`;
+    if (k < 1) requestAnimationFrame(step);
+  };
+  el.textContent = '0%';
+  requestAnimationFrame(step);
+}
+
+function flash(el) {
+  if (!el || calm()) return;
+  el.classList.remove('landed');
+  void el.offsetWidth;
+  el.classList.add('landed');
+  setTimeout(() => el.classList.remove('landed'), 1300);
 }
 
 function trackActive() {
@@ -70,6 +114,7 @@ export function render() {
   const rail = hooks.renderRail(state);
   setHTML($('rail-top'), rail.top);
   setHTML($('rail-bottom'), rail.bottom);
+  markMotion();
 }
 
 function updateLive() {
@@ -78,16 +123,24 @@ function updateLive() {
 }
 
 export function setChoice(k, v) {
+  document.documentElement.classList.add('theming');
+  setTimeout(() => document.documentElement.classList.remove('theming'), 600);
   state.choice[k] = v;
   remember(k, v);
   $('sections')._html = null;
   render();
 }
 
+function go(id) {
+  const el = $(id);
+  el?.scrollIntoView({ behavior: smooth() });
+  flash(el);
+}
+
 function jump(dir) {
   const ids = state.plan.model.sections.map(s => s.id);
   const next = ids[Math.min(ids.length - 1, Math.max(0, ids.indexOf(state.active) + dir))];
-  $(next)?.scrollIntoView({ behavior: 'smooth' });
+  go(next);
 }
 
 export const keymap = {
@@ -118,9 +171,9 @@ document.addEventListener('click', e => {
   if (menu && !e.target.closest('.tw')) menu.hidden = true;
   if (actEl && actions[actEl.dataset.act]) { e.preventDefault(); actions[actEl.dataset.act](actEl, e); return; }
   const goto = e.target.closest('[data-goto]');
-  if (goto) { $(goto.dataset.goto)?.scrollIntoView({ behavior: 'smooth' }); return; }
+  if (goto) { go(goto.dataset.goto); return; }
   const stripTab = e.target.closest('.secs a');
-  if (stripTab) { e.preventDefault(); setActive(stripTab.dataset.sec); $(stripTab.dataset.sec)?.scrollIntoView({ behavior: 'smooth' }); }
+  if (stripTab) { e.preventDefault(); setActive(stripTab.dataset.sec); go(stripTab.dataset.sec); }
 });
 
 document.addEventListener('keydown', e => {
@@ -151,7 +204,11 @@ async function boot() {
   } catch (e) {
     toast(`Could not load the plan: ${e.message}`);
   }
+  if (!calm()) document.body.classList.add('intro');
   render();
+  document.querySelectorAll('#sections > section').forEach((el, i) => el.style.setProperty('--i', Math.min(i, 8)));
+  countUp(document.querySelector('.ring b'), parseInt(document.querySelector('.ring b')?.textContent ?? '0', 10));
+  setTimeout(() => document.body.classList.remove('intro'), 1800);
   connect();
   matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
     if (state.choice?.mode === 'auto') { $('sections')._html = null; render(); }

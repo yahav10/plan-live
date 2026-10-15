@@ -35,7 +35,7 @@ export function renderDag(nodes, edges, { active, zoomable = false } = {}) {
     const s = pos.get(a), t = pos.get(b);
     if (a === b || !s || !t) return '';
     const x1 = s.x + s.w, y1 = s.y + s.h / 2, x2 = t.x, y2 = t.y + t.h / 2, mx = (x1 + x2) / 2;
-    const path = `<path class="edge${b === active ? ' flow' : ''}" data-from="${esc(a)}" data-to="${esc(b)}" d="M${x1} ${y1} C${mx} ${y1} ${mx} ${y2} ${x2} ${y2}"/>`;
+    const path = `<path class="edge${b === active ? ' flow' : ''}"${b === active ? '' : ' pathLength="1"'} data-from="${esc(a)}" data-to="${esc(b)}" d="M${x1} ${y1} C${mx} ${y1} ${mx} ${y2} ${x2} ${y2}"/>`;
     return label ? `${path}<text class="elabel" x="${mx}" y="${(y1 + y2) / 2 - 6}" text-anchor="middle">${esc(label)}</text>` : path;
   };
   const node = n => {
