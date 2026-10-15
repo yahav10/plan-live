@@ -13,8 +13,8 @@ test('formatBatch lists every comment with its anchor and the exact resolve comm
   assert.match(t, /\[c_1\] comment on § t3 › task "Run the eval x10"/);
   assert.match(t, /\[c_2\] suggestion on § decisions/);
   assert.match(t, /replace: "Gate"\n\s+with:\s+"Gate \(AI-X\)"/);
-  assert.match(t, /node "\/plug\/bin\/plan-live\.mjs" resolve "\/p\/plan\.md" <id> --status resolved\|declined --note "<one line>"/);
-  assert.match(t, /node "\/plug\/bin\/plan-live\.mjs" watch "\/p\/plan\.md"/);
+  assert.match(t, /node "\/plug\/bin\/plan-live\.mjs" resolve '\/p\/plan\.md' <id> --status resolved\|declined --note "<one line>"/);
+  assert.match(t, /node "\/plug\/bin\/plan-live\.mjs" watch '\/p\/plan\.md'/);
 });
 
 test('formatRejections names the comment and forbids re-applying', () => {
@@ -24,4 +24,13 @@ test('formatRejections names the comment and forbids re-applying', () => {
   ] });
   assert.match(t, /rejected your change for c_1 .*do not re-apply/);
   assert.match(t, /could not undo r2.*revert it by hand/);
+});
+
+test('a plan path with shell metacharacters is single-quoted so it cannot expand', () => {
+  const plan = "/tmp/x$(touch pwned)`id`\"y'z.md";
+  const t = formatBatch({ batch: { id: 'b_9', commentIds: ['c_1'] }, comments, plan, cli: '/plug/bin/plan-live.mjs' });
+  const quoted = "'/tmp/x$(touch pwned)`id`\"y'\\''z.md'";
+  assert.ok(t.includes(`resolve ${quoted} <id>`), t);
+  assert.ok(t.includes(`watch ${quoted}`), t);
+  assert.ok(!t.includes(`"${plan}"`));
 });

@@ -19,7 +19,7 @@ test('plan text with HTML and javascript: links renders inert', () => {
   const html = inline('<img src=x onerror=alert(1)> [click](javascript:alert(1)) [ok](https://a.dev/x) `<b>`');
   assert.ok(!html.includes('<img'));
   assert.ok(!html.includes('href="javascript:'));
-  assert.match(html, /<a href="https:\/\/a\.dev\/x" target="_blank" rel="noopener">ok<\/a>/);
+  assert.match(html, /<a href="https:\/\/a\.dev\/x" target="_blank" rel="noopener noreferrer">ok<\/a>/);
   assert.match(html, /<code>&lt;b&gt;<\/code>/);
   assert.equal(esc(`"'<>&`), '&quot;&#39;&lt;&gt;&amp;');
 });

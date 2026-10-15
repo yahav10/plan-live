@@ -217,3 +217,17 @@ test('GET /api/source returns the plan file byte for byte, including CRLF', asyn
   writeFileSync(plan, 'edited\r\n');
   assert.equal((await api('GET', '/api/source')).data.text, 'edited\r\n');
 });
+
+test('every response carries a strict CSP, no-referrer, nosniff and frame denial', async () => {
+  const { api } = await start();
+  for (const path of ['/', '/api/plan', '/nope.js']) {
+    const { headers } = await api('GET', path);
+    assert.match(headers.get('content-security-policy'), /default-src 'self'/);
+    assert.match(headers.get('content-security-policy'), /script-src 'self'/);
+    assert.match(headers.get('content-security-policy'), /object-src 'none'/);
+    assert.match(headers.get('content-security-policy'), /frame-ancestors 'none'/);
+    assert.equal(headers.get('referrer-policy'), 'no-referrer');
+    assert.equal(headers.get('x-content-type-options'), 'nosniff');
+    assert.equal(headers.get('x-frame-options'), 'DENY');
+  }
+});

@@ -15,6 +15,12 @@ const TYPES = {
   '.html': 'text/html; charset=utf-8', '.mjs': 'text/javascript', '.js': 'text/javascript', '.css': 'text/css',
   '.woff2': 'font/woff2', '.svg': 'image/svg+xml', '.json': 'application/json',
 };
+const SECURITY_HEADERS = {
+  'content-security-policy': "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'",
+  'referrer-policy': 'no-referrer',
+  'x-content-type-options': 'nosniff',
+  'x-frame-options': 'DENY',
+};
 const flip = line => line.replace(/\[( |x|X)\]/, (_, c) => (c === ' ' ? '[x]' : '[ ]'));
 
 function json(res, code, data) {
@@ -168,6 +174,7 @@ export async function createPlanServer({ planPath, port = 0, key = randomBytes(3
   const cookieKey = req => (req.headers.cookie ?? '').split(/;\s*/).find(c => c.startsWith(`${cookieName()}=`))?.slice(cookieName().length + 1);
 
   async function handle(req, res) {
+    for (const [k, v] of Object.entries(SECURITY_HEADERS)) res.setHeader(k, v);
     const url = new URL(req.url, 'http://127.0.0.1');
     const self = `127.0.0.1:${server.address().port}`;
     const host = req.headers.host;

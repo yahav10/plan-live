@@ -1,5 +1,7 @@
 const anchorText = a => `§ ${a.sectionId}${a.taskId && a.quote ? ` › task "${a.quote}"` : ''}`;
 
+const shellQuote = s => `'${String(s).replace(/'/g, `'\\''`)}'`;
+
 export function formatBatch({ batch, comments, plan, cli }) {
   const byId = new Map(comments.map(c => [c.id, c]));
   const items = batch.commentIds.map(id => byId.get(id)).filter(Boolean);
@@ -7,8 +9,8 @@ export function formatBatch({ batch, comments, plan, cli }) {
   const out = [
     `plan-live review batch ${batch.id} for ${plan} — ${items.length} comment${items.length === 1 ? '' : 's'}.`,
     'For each comment: edit the plan as needed (or decide to decline), then run:',
-    `  ${run} resolve "${plan}" <id> --status resolved|declined --note "<one line>"`,
-    `When every comment is resolved, restart the watcher in the background: ${run} watch "${plan}"`,
+    `  ${run} resolve ${shellQuote(plan)} <id> --status resolved|declined --note "<one line>"`,
+    `When every comment is resolved, restart the watcher in the background: ${run} watch ${shellQuote(plan)}`,
     '',
   ];
   for (const c of items) {

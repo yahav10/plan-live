@@ -276,6 +276,11 @@ function connect() {
 }
 
 async function boot() {
+  const params = new URLSearchParams(location.search);
+  if (params.has('key')) {
+    params.delete('key');
+    history.replaceState(null, '', location.pathname + (params.size ? `?${params}` : ''));
+  }
   try {
     state.plan = await api('GET', '/api/plan');
     state.review = await api('GET', '/api/review');

@@ -11,6 +11,9 @@ test('command has a description and starts server and watcher in the background'
   assert.match(md, /bin\/plan-live\.mjs" serve/);
   assert.match(md, /bin\/plan-live\.mjs" watch/);
   assert.match(md, /run_in_background/);
+  assert.match(md, /serve '<plan>'/);
+  assert.match(md, /watch '<plan>'/);
+  assert.match(md, /single quotes/i);
 });
 
 test('skill frontmatter names the trigger and the procedure resolves every comment', () => {
