@@ -1,5 +1,5 @@
 import { api, toast } from './lib.mjs';
-import { resolveChoice, applyTheme, nextMode, nextTheme, remember } from './theme.mjs';
+import { resolveChoice, applyTheme, nextMode, nextTheme, remember, recall } from './theme.mjs';
 import { renderStrip, fmtAge } from './components/strip.mjs';
 import { renderHero } from './components/hero.mjs';
 import { renderSections } from './components/sections.mjs';
@@ -7,13 +7,13 @@ import { visual } from './components/visual.mjs';
 import { hydrateMermaid } from './components/mermaid.mjs';
 import { attachPanZoom } from './components/dag.mjs';
 import { renderRail, anchorLabel } from './components/review.mjs';
-import { filterSections, renderJumpRows } from './components/jump.mjs';
+import { filterSections, renderJumpRows, renderSpine } from './components/jump.mjs';
 import { exportName, toCsv, reviewMarkdown, download, diagramSvg, svgToPng, standaloneHtml } from './export.mjs';
 
 const calm = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 const smooth = () => (calm() ? 'auto' : 'smooth');
 
-export const state = { plan: null, review: { comments: [], batches: [], revisions: [] }, choice: null, online: false, active: null, anchor: null, selAnchor: null, composing: null, jump: { open: false, q: '', act: 0 }, scroll: 0, prev: new Map(), checked: new Map(), seen: new Set() };
+export const state = { plan: null, review: { comments: [], batches: [], revisions: [] }, choice: null, online: false, active: null, anchor: null, selAnchor: null, composing: null, jump: { open: false, q: '', act: 0 }, scroll: 0, spine: false, prev: new Map(), checked: new Map(), seen: new Set() };
 export const hooks = {
   visual,
   afterSections: (root, mode) => {
@@ -85,7 +85,8 @@ function flash(el) {
 function trackActive() {
   const cards = [...document.querySelectorAll('#sections section[data-sec]:not(#intro):not(#graph)')];
   const passed = cards.filter(c => c.getBoundingClientRect().top <= 120);
-  const current = passed.at(-1) ?? cards[0];
+  const atBottom = scrollY + innerHeight >= document.documentElement.scrollHeight - 2;
+  const current = (atBottom && cards.at(-1)) || passed.at(-1) || cards[0];
   if (current) setActive(current.dataset.sec);
   const max = document.documentElement.scrollHeight - innerHeight;
   state.scroll = max > 0 ? Math.min(1, Math.max(0, scrollY / max)) : 0;
@@ -94,6 +95,26 @@ function trackActive() {
 
 function paintScroll() {
   document.querySelector('.pill')?.style.setProperty('--scroll', state.scroll.toFixed(3));
+  paintSpineFill();
+}
+
+function paintSpine() {
+  const spine = $('spine');
+  spine.hidden = !state.spine || !state.plan?.model.sections.length;
+  if (spine.hidden) return;
+  const { sections } = state.plan.model;
+  const weights = sections.map(s => $(s.id)?.offsetHeight ?? 1);
+  spine.innerHTML = renderSpine({ sections, weights, active: state.active });
+  paintSpineFill();
+}
+
+function paintSpineFill() {
+  if (!state.spine) return;
+  const { sections } = state.plan?.model ?? { sections: [] };
+  $('spine').querySelectorAll('.tick').forEach((tick, i) => {
+    const r = $(sections[i]?.id)?.getBoundingClientRect();
+    if (r) tick.firstElementChild.style.height = `${Math.round(Math.min(1, Math.max(0, (120 - r.top) / r.height)) * 100)}%`;
+  });
 }
 let scrollTick = false;
 addEventListener('scroll', () => {
@@ -108,6 +129,7 @@ function setActive(id) {
   if (!state.plan) return;
   const swap = () => {
     setHTML($('strip'), renderStrip(state));
+    paintSpine();
     paintScroll();
     if (state.jump.open) paintJump();
   };
@@ -178,6 +200,12 @@ $('jump').addEventListener('keydown', e => {
     jumpTo(state.plan.model.sections[matches[state.jump.act]].id);
   }
 });
+$('spine-toggle').addEventListener('change', e => {
+  state.spine = e.target.checked;
+  remember('spine', state.spine ? '1' : '0');
+  paintSpine();
+});
+addEventListener('resize', () => { if (state.spine) paintSpine(); });
 $('jump').querySelector('.jq').addEventListener('input', e => {
   state.jump.q = e.target.value;
   state.jump.act = 0;
@@ -201,6 +229,7 @@ export function render() {
   setHTML($('rail-top'), rail.top);
   setHTML($('rail-bottom'), rail.bottom);
   markMotion();
+  paintSpine();
   if (state.jump.open) paintJump();
 }
 
@@ -339,6 +368,8 @@ document.addEventListener('click', e => {
   if (goto) { go(goto.dataset.goto); return; }
   const row = e.target.closest('#jump [data-jump]');
   if (row) { jumpTo(row.dataset.jump); return; }
+  const tick = e.target.closest('#spine [data-jump]');
+  if (tick) { setActive(tick.dataset.jump); go(tick.dataset.jump); return; }
   if (state.jump.open && !e.target.closest('#jump')) closeJump(false);
 });
 
@@ -377,6 +408,7 @@ async function boot() {
   } catch (e) {
     toast(`Could not load the plan: ${e.message}`);
   }
+  state.spine = recall('spine') === '1';
   if (!calm()) document.body.classList.add('intro');
   render();
   document.querySelectorAll('#sections > section').forEach((el, i) => el.style.setProperty('--i', Math.min(i, 8)));

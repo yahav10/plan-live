@@ -78,3 +78,32 @@ test('offline indicator when the server stops', async ({ page, plan }) => {
   await plan.close();
   await expect(page.locator('.live')).toHaveClass(/off/, { timeout: 10_000 });
 });
+
+test('the reading spine toggles from the panel, jumps on click and remembers the choice', async ({ page, plan }) => {
+  await page.goto(plan.url);
+  await expect(page.locator('h1.title')).toBeVisible();
+  await expect(page.locator('#spine')).toBeHidden();
+  await openJump(page);
+  await page.locator('#spine-toggle').check();
+  await expect(page.locator('#spine .tick')).toHaveCount(7);
+  await expect(page.locator('#spine .tick.cur')).toHaveAttribute('aria-label', '1. Goals');
+  await page.keyboard.press('Escape');
+  await page.locator('#spine .tick[aria-label$="Notes"]').click();
+  await expect(page.locator('.pill .ptxt')).toContainText('Notes');
+  await expect(page.locator('#spine .tick.cur')).toHaveAttribute('aria-label', /Notes/);
+  await page.reload();
+  await expect(page.locator('#spine .tick')).toHaveCount(7);
+  await openJump(page);
+  await expect(page.locator('#spine-toggle')).toBeChecked();
+  await page.locator('#spine-toggle').uncheck();
+  await expect(page.locator('#spine')).toBeHidden();
+});
+
+test('the pill arc follows the scroll position', async ({ page, plan }) => {
+  await page.goto(plan.url);
+  await expect(page.locator('h1.title')).toBeVisible();
+  const arc = () => page.locator('.pill').evaluate(el => el.style.getPropertyValue('--scroll'));
+  await expect.poll(arc).toBe('0.000');
+  await page.evaluate(() => scrollTo(0, document.documentElement.scrollHeight));
+  await expect.poll(arc).toBe('1.000');
+});
