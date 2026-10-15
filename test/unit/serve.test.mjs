@@ -208,3 +208,12 @@ test('the next batch carries earlier reject outcomes so a watcher-only user stil
   assert.match(data.text, /rejected your change/);
   assert.equal((await api('GET', '/api/rejections')).data.text, '');
 });
+
+test('GET /api/source returns the plan file byte for byte, including CRLF', async () => {
+  const { api, plan } = await start('crlf.md');
+  const { status, data } = await api('GET', '/api/source');
+  assert.equal(status, 200);
+  assert.equal(data.text, readFileSync(plan, 'utf8'));
+  writeFileSync(plan, 'edited\r\n');
+  assert.equal((await api('GET', '/api/source')).data.text, 'edited\r\n');
+});

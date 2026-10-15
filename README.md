@@ -70,6 +70,7 @@ The page never edits your plan on its own, except for two things you asked for e
 | **Review rail** | Draft, queued, picked up, resolved or declined, per comment |
 | **Diff per change** | Accept or Reject each change Claude made for a comment |
 | **Themes** | Aurora, Editorial, Blueprint, each light and dark (`T`, `D`) |
+| **Export** | Markdown, standalone HTML (fonts inlined, no scripts), PDF via print, copy as Markdown, plan model JSON, tasks CSV, review notes (Markdown/JSON), and SVG or PNG for every diagram |
 | **Motion** | Smooth scrolling, staggered entrance, progress that sweeps and counts up, checkbox pops, comments that slide in. Off under reduced-motion |
 
 Works on any markdown plan. Plans with `### Task N` headings and `- [ ]` steps get the most from it.

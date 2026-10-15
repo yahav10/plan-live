@@ -18,7 +18,7 @@ export async function hydrateMermaid(root, mode) {
   if (!els.length) return;
   let m;
   try { m = await load(); } catch (e) { els.forEach(el => fallback(el, e.message)); return; }
-  m.initialize({ startOnLoad: false, securityLevel: 'strict', theme: mode === 'dark' ? 'dark' : 'neutral' });
+  m.initialize({ startOnLoad: false, securityLevel: 'strict', theme: mode === 'dark' ? 'dark' : 'neutral', htmlLabels: false, flowchart: { htmlLabels: false } });
   for (const [i, el] of els.entries()) {
     try {
       const { svg } = await m.render(`mmd-${Date.now()}-${i}`, el.dataset.code);

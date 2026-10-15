@@ -8,6 +8,12 @@ export function fmtAge(ms) {
   return `${Math.floor(s / 3600)}h`;
 }
 
+const EXPORTS = [
+  ['Plan', [['md', 'Markdown', '.md'], ['html', 'Web page', '.html'], ['pdf', 'PDF', 'print'], ['copy-md', 'Copy as Markdown', 'clipboard']]],
+  ['Data', [['json', 'Plan model', '.json'], ['csv', 'Tasks', '.csv']]],
+  ['Review', [['review-md', 'Notes', '.md'], ['review-json', 'Data', '.json']]],
+];
+
 const pct = p => (p.total ? Math.round((p.done / p.total) * 100) : 0);
 
 export function renderStrip({ plan, choice, online, active }) {
@@ -21,6 +27,7 @@ export function renderStrip({ plan, choice, online, active }) {
     `<button data-act="set-theme" data-theme-id="${id}" class="${id === choice.theme ? 'on' : ''}"><span class="sw sw-${id}"></span>${name}</button>`).join('');
   return `<span class="live${online ? '' : ' off'}" title="${online ? `Updated ${age} ago by ${esc(plan.changedBy)}` : 'Offline — reconnecting'}"><i></i><span id="age">${online ? age : 'offline'}</span></span>
 <nav class="secs">${tabs}</nav>
+<div class="tw"><button class="tbtn" data-act="export-menu" title="Export"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M6 1v7M3 5.5L6 8.5l3-3M1.5 10.5h9" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="name">Export</span></button><div class="menu" id="export-menu" hidden>${EXPORTS.map(([h, items]) => `<div class="menu-h">${h}</div>${items.map(([fmt, label, hint]) => `<button data-act="export" data-fmt="${fmt}"><span>${label}</span><small>${hint}</small></button>`).join('')}`).join('')}</div></div>
 <div class="tw"><button class="tbtn" data-act="theme-menu" title="Theme (T)"><span class="sw sw-${choice.theme}"></span><span class="name">${THEMES[choice.theme]}</span><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 4l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></button><div class="menu" id="theme-menu" hidden>${menu}</div></div>
 <button class="ibtn" data-act="mode" title="Mode: ${choice.mode} (D)">${modeIcon(choice.mode)}</button>`;
 }

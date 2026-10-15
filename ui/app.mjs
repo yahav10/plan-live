@@ -7,6 +7,7 @@ import { visual } from './components/visual.mjs';
 import { hydrateMermaid } from './components/mermaid.mjs';
 import { attachPanZoom } from './components/dag.mjs';
 import { renderRail, anchorLabel } from './components/review.mjs';
+import { exportName, toCsv, reviewMarkdown, download, diagramSvg, svgToPng, standaloneHtml } from './export.mjs';
 
 const calm = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 const smooth = () => (calm() ? 'auto' : 'smooth');
@@ -17,6 +18,7 @@ export const hooks = {
   afterSections: (root, mode) => {
     hydrateMermaid(root, mode);
     root.querySelectorAll('svg.dag.zoomable').forEach(attachPanZoom);
+    addDiagramTools(root);
   },
   renderRail,
 };
@@ -158,17 +160,94 @@ async function toggleTask(li) {
   }
 }
 
+function toggleMenu(id) {
+  document.querySelectorAll('.menu').forEach(m => { if (m.id !== id) m.hidden = true; });
+  $(id).hidden = !$(id).hidden;
+}
+
+const fileName = () => state.plan.file;
+const saved = name => toast(`Saved ${name}`);
+const diagramHosts = root => [...root.querySelectorAll('.graph-card, .block:has(.arch), .block:has(.mermaid-block)')];
+
+function addDiagramTools(root) {
+  for (const host of diagramHosts(root)) {
+    if (host.querySelector(':scope > .xtools')) continue;
+    host.insertAdjacentHTML('afterbegin', '<div class="xtools"><button data-xport="svg" title="Download as SVG">SVG</button><button data-xport="png" title="Download as PNG">PNG</button></div>');
+  }
+}
+
+async function exportDiagram(btn) {
+  const host = btn.closest('.graph-card, .block');
+  const svg = host.querySelector('svg:not(.xtools svg)');
+  if (!svg) { toast('This diagram is not rendered yet'); return; }
+  const hosts = diagramHosts(document.getElementById('sections'));
+  const suffix = host.classList.contains('graph-card') ? 'graph' : `diagram-${hosts.filter(h => !h.classList.contains('graph-card')).indexOf(host) + 1}`;
+  try {
+    const out = diagramSvg(svg);
+    if (btn.dataset.xport === 'png') {
+      const name = exportName(fileName(), suffix, 'png');
+      download(name, await svgToPng(out), 'image/png');
+      saved(name);
+    } else {
+      const name = exportName(fileName(), suffix, 'svg');
+      download(name, out.text, 'image/svg+xml');
+      saved(name);
+    }
+  } catch (e) {
+    toast(`Export failed: ${e.message}`);
+  }
+}
+
+async function runExport(fmt) {
+  const file = fileName(), plan = state.plan, review = state.review;
+  try {
+    if (fmt === 'pdf') { print(); return; }
+    if (fmt === 'copy-md' || fmt === 'md') {
+      const { text } = await api('GET', '/api/source');
+      if (fmt === 'copy-md') { await navigator.clipboard.writeText(text); toast('Copied Markdown to the clipboard'); return; }
+      download(exportName(file, '', 'md'), text, 'text/markdown;charset=utf-8');
+      saved(exportName(file, '', 'md'));
+      return;
+    }
+    const jobs = {
+      html: async () => [exportName(file, '', 'html'), await standaloneHtml(file), 'text/html;charset=utf-8'],
+      json: () => [exportName(file, 'plan', 'json'), JSON.stringify(plan.model, null, 2) + '\n', 'application/json'],
+      csv: () => [exportName(file, 'tasks', 'csv'), '\uFEFF' + toCsv(plan.model), 'text/csv;charset=utf-8'],
+      'review-md': () => [exportName(file, 'review', 'md'), reviewMarkdown(review, plan.model, file), 'text/markdown;charset=utf-8'],
+      'review-json': () => [exportName(file, 'review', 'json'), JSON.stringify({ comments: review.comments, batches: review.batches, revisions: review.revisions }, null, 2) + '\n', 'application/json'],
+    };
+    const [name, data, mime] = await jobs[fmt]();
+    download(name, data, mime);
+    saved(name);
+  } catch (e) {
+    toast(`Export failed: ${e.message}`);
+  }
+}
+
+let beforePrintMode = null;
+addEventListener('beforeprint', () => {
+  beforePrintMode = document.documentElement.dataset.mode;
+  document.documentElement.dataset.mode = 'light';
+});
+addEventListener('afterprint', () => {
+  if (beforePrintMode) document.documentElement.dataset.mode = beforePrintMode;
+  beforePrintMode = null;
+});
+
 export const actions = {
-  'theme-menu': () => { $('theme-menu').hidden = !$('theme-menu').hidden; },
+  'theme-menu': () => toggleMenu('theme-menu'),
+  'export-menu': () => toggleMenu('export-menu'),
+  export: el => { $('export-menu').hidden = true; runExport(el.dataset.fmt); },
   'set-theme': el => setChoice('theme', el.dataset.themeId),
   mode: () => setChoice('mode', nextMode(state.choice.mode)),
   toggle: el => toggleTask(el.closest('[data-task]')),
 };
 
 document.addEventListener('click', e => {
+  const xp = e.target.closest('[data-xport]');
+  if (xp) { e.preventDefault(); exportDiagram(xp); return; }
   const actEl = e.target.closest('[data-act]');
-  const menu = $('theme-menu');
-  if (menu && !e.target.closest('.tw')) menu.hidden = true;
+  document.querySelectorAll('.menu').forEach(m => { if (!m.parentElement.contains(e.target)) m.hidden = true; });
   if (actEl && actions[actEl.dataset.act]) { e.preventDefault(); actions[actEl.dataset.act](actEl, e); return; }
   const goto = e.target.closest('[data-goto]');
   if (goto) { go(goto.dataset.goto); return; }
@@ -296,7 +375,7 @@ $('composer-body').addEventListener('keydown', e => {
 $('composer-suggest').addEventListener('change', e => { $('composer-replacement').hidden = !e.target.checked; });
 
 document.addEventListener('click', e => {
-  if (e.target.closest('[data-act], [data-goto], .rail, .strip')) return;
+  if (e.target.closest('[data-act], [data-goto], [data-xport], .rail, .strip')) return;
   const task = e.target.closest('main [data-task]');
   const sec = e.target.closest('main section[data-sec]');
   if (task) setAnchor({ sectionId: task.dataset.sec, taskId: task.dataset.task, quote: task.dataset.text }, task);

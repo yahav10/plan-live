@@ -45,3 +45,24 @@ test('visual handles architecture and mermaid blocks, ignores others', () => {
   assert.match(visual({ type: 'mermaid', code: 'graph TD; A-->B' }, wrap), /class="mermaid-block" data-code="graph TD; A--&gt;B"/);
   assert.equal(visual({ type: 'paragraph', text: 'x' }, wrap), undefined);
 });
+
+test('the viewBox leaves room for the node glow on every side', () => {
+  const svg = renderDag(model.graph.nodes, model.graph.edges, { active: 'T2' });
+  const [vx, vy, vw, vh] = svg.match(/viewBox="([^"]+)"/)[1].split(' ').map(Number);
+  const rects = [...svg.matchAll(/<rect x="(-?[\d.]+)" y="(-?[\d.]+)" width="([\d.]+)" height="([\d.]+)"/g)].map(m => m.slice(1).map(Number));
+  const GLOW = 28;
+  assert.ok(Math.min(...rects.map(r => r[0])) - vx >= GLOW);
+  assert.ok(Math.min(...rects.map(r => r[1])) - vy >= GLOW);
+  assert.ok(vx + vw - Math.max(...rects.map(r => r[0] + r[2])) >= GLOW);
+  assert.ok(vy + vh - Math.max(...rects.map(r => r[1] + r[3])) >= GLOW);
+});
+
+test('layout never leaves empty columns, so cyclic graphs still get a finite size', () => {
+  const nodes = ['Browser', 'Web', 'API', 'Vault', 'Payments'].map(key => ({ key, label: key }));
+  const edges = [['Browser', 'Web'], ['Web', 'API'], ['API', 'Vault'], ['API', 'Payments'], ['Payments', 'API']];
+  const { width, height, pos } = layout(nodes, edges);
+  assert.ok(Number.isFinite(width) && Number.isFinite(height));
+  const cols = [...new Set([...pos.values()].map(p => p.x))].sort((a, b) => a - b);
+  cols.forEach((x, i) => assert.equal(x, i * 250));
+  assert.ok(!renderDag(nodes, edges).includes('NaN'));
+});
