@@ -2,6 +2,10 @@
 
 All notable changes to plan-live. Versions follow [semver](https://semver.org).
 
+## Unreleased
+
+- Each review batch now lists the line range of every commented section and an outline of the plan with line numbers. The skill tells Claude to read just those ranges, and the whole plan only when a comment needs other sections or has no range.
+
 ## 0.3.1
 
 - Task sections are labelled `T1`, `T2`… in the pill, the jump panel and the spine, matching the dependency graph. The filter also matches the full heading, so `task` and `t2` both work.

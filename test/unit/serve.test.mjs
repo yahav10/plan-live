@@ -231,3 +231,20 @@ test('every response carries a strict CSP, no-referrer, nosniff and frame denial
     assert.equal(headers.get('x-frame-options'), 'DENY');
   }
 });
+
+test('the batch from a real apply names the line range of each commented section and an outline', async () => {
+  const { api, plan } = await start();
+  const model = parse(readFileSync(plan, 'utf8'));
+  const goals = model.sections.find(s => s.id === 'goals'), t2 = model.sections.find(s => s.id.startsWith('task-2'));
+  const task = taskByText('Implement parse', plan);
+  await api('POST', '/api/comments', { anchor: anchorOf(task), body: 'rename' });
+  await api('POST', '/api/comments', { anchor: { sectionId: 'goals' }, body: 'more' });
+  await api('POST', '/api/apply');
+  const { data } = await api('GET', '/api/wait?nowait=1');
+  assert.match(data.text, /Plan outline/);
+  assert.ok(data.text.includes(`${goals.line}-${goals.endLine} Goals`));
+  assert.ok(data.text.includes(`${t2.line}-${t2.endLine} ${t2.heading}`));
+  const sec = model.sections.find(s => s.id === task.sectionId);
+  assert.match(data.text, new RegExp(`\\[c_[^\\]]+\\] comment on § ${task.sectionId}[^\\n]*\\n\\s+context: lines ${sec.line}-${sec.endLine}`));
+  assert.match(data.text, new RegExp(`§ goals\\n\\s+context: lines ${goals.line}-${goals.endLine}`));
+});

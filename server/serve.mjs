@@ -91,7 +91,7 @@ export async function createPlanServer({ planPath, port = 0, key = randomBytes(3
     const comments = b.commentIds.map(id => store.state.comments.find(c => c.id === id));
     const outcomes = store.takeUnreported();
     const tail = outcomes.length ? `\n\n${formatRejections({ revisions: outcomes, comments: store.state.comments, plan: planPath })}` : '';
-    return { batch: b, comments, text: formatBatch({ batch: b, comments, plan: planPath, cli: CLI }) + tail };
+    return { batch: b, comments, text: formatBatch({ batch: b, comments, plan: planPath, cli: CLI, model, lineCount: text.replace(/\n$/, '').split('\n').length }) + tail };
   };
   function wake() {
     for (const w of [...waiters]) {
