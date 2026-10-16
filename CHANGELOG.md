@@ -2,7 +2,7 @@
 
 All notable changes to plan-live. Versions follow [semver](https://semver.org).
 
-## Unreleased
+## 0.3.2
 
 - Each review batch now lists the line range of every commented section and an outline of the plan with line numbers. The skill tells Claude to read just those ranges, and the whole plan only when a comment needs other sections or has no range.
 
