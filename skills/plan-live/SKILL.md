@@ -9,7 +9,8 @@ The user commented on a plan in the live page and pressed Apply. The batch text 
 
 ## Procedure
 
-1. Read the plan file named in the batch header.
+1. Read only what the comments need. Each comment has a `context: lines A-B` line and the batch header has a plan outline. Read those lines with the Read tool (`offset` and `limit`), not the whole plan. Read the whole plan when a comment affects other sections, when its context says `not found`, or when the batch has no context lines.
+   Line numbers are as of when Apply was pressed. They shift after you edit, so re-read the range (or search for the quoted text) before each edit.
 2. For each comment, in order:
    - **comment**: make the change it asks for in the `.md` with Edit, or decide it is wrong.
    - **suggestion**: replace the quoted text with the replacement exactly, unless that would make the plan wrong.

@@ -26,3 +26,11 @@ test('skill frontmatter names the trigger and the procedure resolves every comme
   assert.match(md, /never edit .*review\.json/i);
   assert.match(md, /restart the watcher/i);
 });
+
+test('skill reads the given line ranges, not the whole plan, and says when to read it all', () => {
+  const md = read('skills/plan-live/SKILL.md');
+  assert.match(md, /context: lines/);
+  assert.match(md, /offset/);
+  assert.match(md, /whole plan/i);
+  assert.match(md, /stale|shift|re-read/i);
+});
