@@ -14,6 +14,7 @@ The user commented on a plan in the live page and pressed Apply. The batch text 
 2. For each comment, in order:
    - **comment**: make the change it asks for in the `.md` with Edit, or decide it is wrong.
    - **suggestion**: replace the quoted text with the replacement exactly, unless that would make the plan wrong.
+   - **run**: the user asked you to execute that section. Do the work its unchecked steps describe, in order, and change each finished step from `- [ ]` to `- [x]` in the plan as you go, so the page shows progress. Stop at the first step you cannot finish. Resolve with a note saying what ran, or decline with the step and the reason it failed. Anything that needs a tool permission still goes through Claude Code's normal prompt.
    - Then run the resolve command printed in the batch, with `--status resolved` and a one-line `--note` saying what changed, or `--status declined` and a one-line reason. Every comment must end resolved or declined.
 3. Edit only the plan `.md`. Never edit `*.review.json`: the plan-live server owns it.
 4. After the last resolve, restart the watcher in the background (Bash, `run_in_background: true`) with the watch command printed in the batch.

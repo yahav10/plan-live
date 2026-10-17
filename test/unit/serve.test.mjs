@@ -248,3 +248,17 @@ test('the batch from a real apply names the line range of each commented section
   assert.match(data.text, new RegExp(`\\[c_[^\\]]+\\] comment on § ${task.sectionId}[^\\n]*\\n\\s+context: lines ${sec.line}-${sec.endLine}`));
   assert.match(data.text, new RegExp(`§ goals\\n\\s+context: lines ${goals.line}-${goals.endLine}`));
 });
+
+test('a run request goes through the real server and reaches the watcher as an execute instruction', async () => {
+  const { api, plan } = await start();
+  const task1 = parse(readFileSync(plan, 'utf8')).sections.find(s => s.node?.key === 'T2');
+  const made = await api('POST', '/api/comments', { anchor: { sectionId: task1.id }, kind: 'run' });
+  assert.equal(made.status, 201);
+  assert.equal(made.data.body, 'Run this section');
+  assert.equal((await api('POST', '/api/comments', { anchor: { sectionId: task1.id }, kind: 'run' })).status, 409);
+  assert.equal((await api('POST', '/api/apply')).status, 201);
+  const r = await api('GET', '/api/wait?nowait=1');
+  assert.match(r.data.text, new RegExp(`run on § ${task1.id}`));
+  assert.match(r.data.text, /Execute this section: work through its unchecked steps in order/);
+  assert.match(r.data.text, /context: lines \d+-\d+/);
+});

@@ -115,3 +115,19 @@ test('patchSnapshots rewrites open batch snapshots only', () => {
   s.patchSnapshots(t => t.replace('[ ]', '[x]'));
   assert.equal(s.state.batches[0].snapshot, '- [x] alpha task');
 });
+
+test('a run request needs no body, defaults one, and only one can be open per section', () => {
+  const s = createStore(plan);
+  const r = s.addComment({ anchor: { sectionId: 'a' }, kind: 'run' });
+  assert.equal(r.kind, 'run');
+  assert.equal(r.body, 'Run this section');
+  assert.throws(() => s.addComment({ anchor: { sectionId: 'a' }, kind: 'run' }), err => err instanceof StoreError && err.code === 409);
+  s.addComment({ anchor: { sectionId: 'b' }, kind: 'run' });
+  assert.throws(() => s.addComment({ anchor: { sectionId: 'a' }, body: '' }), err => err.code === 400, 'a plain comment still needs a body');
+  const b = s.apply('snap');
+  s.pickPending();
+  assert.throws(() => s.addComment({ anchor: { sectionId: 'a' }, kind: 'run' }), err => err.code === 409, 'still open while queued with Claude');
+  s.resolve(r.id, 'resolved', 'ran it');
+  assert.equal(s.addComment({ anchor: { sectionId: 'a' }, kind: 'run' }).kind, 'run', 'a finished run can be requested again');
+  assert.ok(b.commentIds.includes(r.id));
+});

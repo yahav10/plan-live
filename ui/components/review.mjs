@@ -9,6 +9,8 @@ export function anchorLabel(anchor, model) {
 
 const diff = (minus, plus) => `<div class="diff">${minus.map(l => `<div class="del">- ${esc(l)}</div>`).join('')}${plus.map(l => `<div class="add">+ ${esc(l)}</div>`).join('')}</div>`;
 
+const KIND_LABEL = { suggestion: 'Suggestion', run: '▶ Run' };
+
 function commentCard(c, model, { editable = false } = {}) {
   const suggestion = c.kind === 'suggestion' ? diff([c.anchor.quote ?? ''], [c.replacement ?? '']) : '';
   const resolution = c.resolution
@@ -16,7 +18,7 @@ function commentCard(c, model, { editable = false } = {}) {
   const tools = editable
     ? `<div class="tools"><button class="link" data-act="edit-comment" data-id="${c.id}">Edit</button><button class="link" data-act="delete-comment" data-id="${c.id}">Delete</button></div>` : '';
   return `<div class="cmt${c.orphaned ? ' orphan' : ''}" data-comment="${c.id}">`
-    + `<div class="who"><span class="av">You</span>${c.kind === 'suggestion' ? 'Suggestion' : 'Comment'}${tools}</div>`
+    + `<div class="who"><span class="av">You</span>${KIND_LABEL[c.kind] ?? 'Comment'}${tools}</div>`
     + `<div class="anchor" data-goto="${esc(c.anchor.sectionId)}">↳ ${esc(anchorLabel(c.anchor, model))}${c.orphaned ? ' · anchor no longer in the plan' : ''}</div>`
     + `<div class="body">${inline(c.body)}</div>${suggestion}${resolution}</div>`;
 }

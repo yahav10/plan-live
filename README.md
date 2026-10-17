@@ -163,6 +163,12 @@ The top bar shows one pill with the section you are reading and a ring that fill
 
 <img src="docs/screenshots/jump-panel.png" alt="The section pill with its jump panel open and the reading spine along the left edge" width="860">
 
+## Run a section
+
+Task sections with unfinished steps get a **Run** button. Click it, read the confirm (it warns if the task depends on unfinished ones), and the run is queued as a request in the review rail. Press Apply and Claude works through that section's unchecked steps in order, ticking each box in the plan as it goes, so the page shows progress live. It stops at the first step it cannot finish and says why.
+
+Runs travel the same loop as comments, so the watcher must be running (the confirm tells you if it is not), and Claude Code still asks permission before running anything that needs it. Only plan edits come back as diffs to accept or reject; code Claude writes elsewhere is not shown on the page.
+
 ## Themes
 
 Four themes, each in light and dark. Switch from the top bar or press `T` and `D`.

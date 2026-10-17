@@ -53,8 +53,11 @@ export function createStore(planPath, { now = () => new Date().toISOString() } =
 
     addComment({ anchor, kind = 'comment', body, replacement } = {}) {
       if (!anchor?.sectionId) throw new StoreError(400, 'anchor.sectionId is required');
-      if (!String(body ?? '').trim()) throw new StoreError(400, 'body is required');
-      if (!['comment', 'suggestion'].includes(kind)) throw new StoreError(400, 'kind must be comment|suggestion');
+      if (!['comment', 'suggestion', 'run'].includes(kind)) throw new StoreError(400, 'kind must be comment|suggestion|run');
+      if (kind === 'run') {
+        if (state.comments.some(c => c.kind === 'run' && c.anchor.sectionId === anchor.sectionId && (c.status === 'draft' || c.status === 'queued'))) throw new StoreError(409, 'this section is already queued to run');
+        body = String(body ?? '').trim() || 'Run this section';
+      } else if (!String(body ?? '').trim()) throw new StoreError(400, 'body is required');
       const c = { id: rid('c'), anchor, kind, body: String(body).trim(), status: 'draft', orphaned: false, createdAt: now() };
       if (kind === 'suggestion') c.replacement = String(replacement ?? '');
       state.comments.push(c);

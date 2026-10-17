@@ -48,3 +48,8 @@ test('orphaned comments are flagged', () => {
   const r = renderRail({ ...base, review: { ...base.review, comments: [c({ orphaned: true })] } });
   assert.match(r.top, /anchor no longer in the plan/);
 });
+
+test('a run request is labelled Run in the rail', () => {
+  const r = renderRail({ ...base, review: { ...base.review, comments: [c({ kind: 'run', body: 'Run this section', anchor: { sectionId: t.sectionId } })] } });
+  assert.match(r.top, /<span class="av">You<\/span>▶ Run/);
+});
