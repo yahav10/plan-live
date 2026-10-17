@@ -123,6 +123,17 @@ function paintSpineFill() {
     if (r) tick.firstElementChild.style.height = `${Math.round(Math.min(1, Math.max(0, (120 - r.top) / r.height)) * 100)}%`;
   });
 }
+let spot = 0;
+document.addEventListener('pointermove', e => {
+  const card = spot ? null : e.target.closest?.('.card');
+  if (!card) return;
+  spot = requestAnimationFrame(() => {
+    spot = 0;
+    const r = card.getBoundingClientRect();
+    card.style.setProperty('--mx', `${e.clientX - r.left}px`);
+    card.style.setProperty('--my', `${e.clientY - r.top}px`);
+  });
+}, { passive: true });
 let scrollTick = false;
 addEventListener('scroll', () => {
   if (scrollTick) return;

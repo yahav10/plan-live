@@ -29,3 +29,26 @@
 [data-theme="editorial"] .cmt:hover { transform: rotate(0) translateY(-3px); }
 [data-theme="editorial"] .card > h2::before { display: inline-block; transition: transform .3s var(--spring); }
 [data-theme="editorial"] .card:hover > h2::before { transform: translateX(4px); }
+
+/* paper and ink: a letterhead bar, stacked sheets, ruled rows, a weighty ease, a stamp that presses down */
+[data-theme="editorial"] { --settle: cubic-bezier(.5, 0, .2, 1); }
+[data-theme="editorial"][data-mode="light"] { --sheet: rgba(70,45,10,.4); }
+[data-theme="editorial"][data-mode="dark"] { --sheet: rgba(0,0,0,.7); }
+[data-theme="editorial"] .strip { background: var(--bg); backdrop-filter: none; border-bottom: 3px double var(--line-strong); }
+[data-theme="editorial"] .strip::after { display: none; }
+[data-theme="editorial"] button.pill { border-radius: 2px; border-color: var(--line-strong); font: italic 600 14px var(--font-display); }
+[data-theme="editorial"] .tbtn, [data-theme="editorial"] .ibtn { border-radius: 2px; }
+[data-theme="editorial"] .menu, [data-theme="editorial"] .jump, [data-theme="editorial"] .sel-comment { border-radius: 3px; background: var(--card); backdrop-filter: none; }
+[data-theme="editorial"] .card { box-shadow: 0 1px 0 var(--line-strong), 0 3px 0 -1px var(--card), 0 4px 0 -1px var(--line), 0 20px 28px -22px var(--sheet); }
+[data-theme="editorial"] .card:hover { transform: translateY(-3px) rotate(-.15deg); box-shadow: 0 1px 0 var(--line-strong), 0 3px 0 -1px var(--card), 0 4px 0 -1px var(--line), 0 28px 34px -22px var(--sheet); }
+[data-theme="editorial"] .card > h2 { padding-bottom: 8px; border-bottom: 1px solid var(--line); font-size: 1.5rem; }
+[data-theme="editorial"] .eyebrow { font: italic 500 .9375rem var(--font-body); letter-spacing: .03em; text-transform: none; }
+[data-theme="editorial"] h1.title { font-size: 3.4rem; line-height: 1.02; letter-spacing: -.035em; }
+[data-theme="editorial"] a { text-decoration-thickness: 1px; text-underline-offset: 3px; text-decoration-color: color-mix(in srgb, var(--accent) 40%, transparent); transition: text-decoration-color .3s var(--settle); }
+[data-theme="editorial"] a:hover { text-decoration-color: var(--accent); }
+[data-theme="editorial"] .task + .task { border-top: 1px solid var(--line); }
+[data-theme="editorial"] .task.done .t { text-decoration-color: var(--ink-2); }
+[data-theme="editorial"] .rail { border-left: 3px double var(--line-strong); }
+[data-theme="editorial"] .rail-h b { font: italic 600 1.35rem var(--font-display); }
+[data-theme="editorial"] .apply:active:not(:disabled) { transform: translateY(4px); box-shadow: 0 2px 0 -2px var(--accent); }
+@media (prefers-reduced-motion: reduce) { [data-theme="editorial"] .card:hover { transform: none; } }

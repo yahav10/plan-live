@@ -32,3 +32,23 @@
 @keyframes sheen { to { background-position: 100% 0; } }
 [data-theme="aurora"] body::before { animation: drift 22s ease-in-out infinite alternate; }
 [data-theme="aurora"] h1.title { background-size: 220% 100%; animation: sheen 10s ease-in-out infinite alternate; }
+
+/* luminous glass: a floating island bar, thick frosted cards, a spotlight that follows the pointer, a soft-bounce spring */
+[data-theme="aurora"] { --settle: cubic-bezier(.3, 1.35, .5, 1); }
+[data-theme="aurora"][data-mode="dark"] { --rim: rgba(255,255,255,.14); --pool: rgba(0,0,0,.7); }
+[data-theme="aurora"][data-mode="light"] { --rim: rgba(255,255,255,.95); --pool: rgba(60,40,140,.35); }
+[data-theme="aurora"] .strip { top: 10px; margin: 10px 16px 0; padding: 8px 14px; border: 1px solid var(--line-strong); border-radius: 20px; background: color-mix(in srgb, var(--bg) 55%, transparent); backdrop-filter: blur(24px) saturate(190%); box-shadow: inset 0 1px 0 var(--rim), 0 18px 40px -20px var(--pool); }
+[data-theme="aurora"] .strip::after { display: none; }
+[data-theme="aurora"] .rail { top: 76px; height: calc(100vh - 76px); }
+[data-theme="aurora"] .card { position: relative; scroll-margin-top: 84px; backdrop-filter: blur(26px) saturate(190%); box-shadow: inset 0 1px 0 var(--rim), 0 28px 50px -34px var(--pool); }
+[data-theme="aurora"] .card::before { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; opacity: 0; transition: opacity .35s; background: radial-gradient(420px circle at var(--mx, 50%) var(--my, 0%), color-mix(in srgb, var(--accent) 20%, transparent), transparent 62%); }
+[data-theme="aurora"] .card:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(--line-strong)); }
+[data-theme="aurora"] .card:hover::before { opacity: 1; }
+[data-theme="aurora"] .chip, [data-theme="aurora"] .tbtn, [data-theme="aurora"] .ibtn { backdrop-filter: blur(12px); }
+[data-theme="aurora"] .task.doing { background: linear-gradient(90deg, var(--accent-soft), transparent 70%); box-shadow: inset 3px 0 0 var(--accent), 0 0 28px -14px var(--accent); }
+[data-theme="aurora"] .apply { border-radius: 14px; }
+[data-theme="aurora"] .apply:hover:not(:disabled) { box-shadow: 0 16px 44px -10px rgba(255,122,198,.85); }
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+  [data-theme="aurora"] .strip, [data-theme="aurora"] .card { backdrop-filter: none; background: color-mix(in srgb, var(--bg) 90%, var(--ink)); }
+  [data-theme="aurora"] .card::before { display: none; }
+}

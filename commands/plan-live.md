@@ -1,6 +1,6 @@
 ---
 description: Open a markdown plan as a live, two-way HTML review page
-argument-hint: "[plan.md] [--theme aurora|editorial|blueprint] [--mode auto|light|dark]"
+argument-hint: "[plan.md] [--theme aurora|editorial|blueprint|fluid] [--mode auto|light|dark]"
 ---
 
 Open a plan in plan-live. Arguments: $ARGUMENTS

@@ -42,3 +42,25 @@
 [data-theme="blueprint"] .card::before, [data-theme="blueprint"] .card::after { transition: width .25s var(--ease), height .25s var(--ease); }
 [data-theme="blueprint"] .card:hover::before, [data-theme="blueprint"] .card:hover::after { width: 18px; height: 18px; }
 [data-theme="blueprint"] .dag .node:not(.doing):not(.done) rect { animation: march 2.4s linear infinite; }
+
+/* drafting table: a title-block bar, ruler ticks, double sheet frame, hatch on hover, stepped motion, inverted press */
+[data-theme="blueprint"] { --settle: steps(5, end); }
+[data-theme="blueprint"] body { cursor: crosshair; }
+[data-theme="blueprint"] .strip { background: var(--bg); backdrop-filter: none; border-bottom: 2px solid var(--accent); }
+[data-theme="blueprint"] .strip::after { display: none; }
+[data-theme="blueprint"] .strip::before { content: "SHEET 01 / REV A"; font: 600 10px var(--font-mono); letter-spacing: .14em; color: var(--accent-ink); border: 1px solid var(--accent); padding: 3px 7px; }
+[data-theme="blueprint"] button.pill, [data-theme="blueprint"] .tbtn, [data-theme="blueprint"] .ibtn, [data-theme="blueprint"] .btn { border-radius: 0; font-family: var(--font-mono); text-transform: uppercase; letter-spacing: .06em; font-size: 11px; }
+[data-theme="blueprint"] button.pill { border-color: var(--line-strong); }
+[data-theme="blueprint"] .menu, [data-theme="blueprint"] .jump, [data-theme="blueprint"] .sel-comment, [data-theme="blueprint"] .jrow, [data-theme="blueprint"] .menu button { border-radius: 0; }
+[data-theme="blueprint"] .menu, [data-theme="blueprint"] .jump, [data-theme="blueprint"] .sel-comment { background: var(--bg); backdrop-filter: none; }
+[data-theme="blueprint"] .card { background-image: repeating-linear-gradient(90deg, var(--line-strong) 0 1px, transparent 1px 12px), repeating-linear-gradient(90deg, var(--accent) 0 1px, transparent 1px 60px); background-size: 100% 4px, 100% 9px; background-repeat: no-repeat; background-position: 0 0; box-shadow: inset 0 0 0 3px var(--bg), inset 0 0 0 4px var(--line); }
+[data-theme="blueprint"] .card:hover { border-color: var(--accent); box-shadow: inset 0 0 0 3px var(--bg), inset 0 0 0 4px var(--accent); }
+[data-theme="blueprint"] h1.title { font-size: 1.9rem; letter-spacing: .05em; }
+[data-theme="blueprint"] .eyebrow, [data-theme="blueprint"] .chip, [data-theme="blueprint"] .file { font-family: var(--font-mono); letter-spacing: .1em; text-transform: uppercase; font-size: 11px; }
+[data-theme="blueprint"] .chip { border-radius: 0; }
+[data-theme="blueprint"] .task:hover { background: repeating-linear-gradient(135deg, transparent 0 5px, var(--accent-soft) 5px 6px); }
+[data-theme="blueprint"] .task.doing { background: repeating-linear-gradient(135deg, transparent 0 5px, var(--accent-soft) 5px 6px); box-shadow: inset 3px 0 0 var(--accent); }
+[data-theme="blueprint"] .task, [data-theme="blueprint"] .cb { border-radius: 0; }
+[data-theme="blueprint"] .btn:active, [data-theme="blueprint"] .tbtn:active, [data-theme="blueprint"] button.pill:active, [data-theme="blueprint"] .ibtn:active { background: var(--accent); color: var(--bg); transform: none; }
+[data-theme="blueprint"] .rail { border-left: 2px solid var(--accent); background-image: repeating-linear-gradient(0deg, transparent 0 31px, var(--line) 31px 32px); }
+[data-theme="blueprint"] .rail-h b { text-transform: uppercase; letter-spacing: .08em; font-size: .875rem; }

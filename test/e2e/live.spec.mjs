@@ -126,3 +126,37 @@ test('scrolling to a new section keeps an open Export menu open', async ({ page,
   await expect(page.locator('.pill .ptxt')).toContainText('Notes');
   await expect(page.locator('#export-menu')).toBeVisible();
 });
+
+test('dragging the architecture graph pans it, glides on release and never counts as a node click', async ({ page, plan }) => {
+  await page.goto(plan.url);
+  const svg = page.locator('.arch svg.dag');
+  await svg.scrollIntoViewIfNeeded();
+  const box = await svg.boundingBox();
+  const vb = () => svg.getAttribute('viewBox');
+  const before = vb();
+  const node = await page.locator('.arch svg.dag .node').first().boundingBox();
+  await page.mouse.move(node.x + node.width / 2, node.y + node.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(node.x + node.width / 2 - 20, node.y + node.height / 2, { steps: 4 });
+  await page.mouse.move(node.x + node.width / 2 - 120, node.y + node.height / 2, { steps: 4 });
+  await page.mouse.up();
+  const atRelease = await vb();
+  expect(atRelease).not.toBe(before);
+  await page.waitForTimeout(250);
+  expect(await vb()).not.toBe(atRelease);
+  await expect(svg).not.toHaveClass(/focus/);
+  expect(box.width).toBeGreaterThan(0);
+});
+
+test('a small wobble under 4px is still a click on the node', async ({ page, plan }) => {
+  await page.goto(plan.url);
+  const svg = page.locator('.arch svg.dag');
+  await svg.scrollIntoViewIfNeeded();
+  const node = await page.locator('.arch svg.dag .node').first().boundingBox();
+  const cx = node.x + node.width / 2, cy = node.y + node.height / 2;
+  await page.mouse.move(cx, cy);
+  await page.mouse.down();
+  await page.mouse.move(cx + 2, cy + 1);
+  await page.mouse.up();
+  await expect(svg).toHaveClass(/focus/);
+});
