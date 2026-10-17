@@ -2,7 +2,7 @@
 
 All notable changes to plan-live. Versions follow [semver](https://semver.org).
 
-## Unreleased
+## 0.4.0
 
 ### Added
 - Fluid theme (light and dark): system font with size-specific tracking, frosted translucent materials that get thicker with surface size, one blue accent, round checkboxes, and solid fallbacks for reduced transparency and increased contrast.
