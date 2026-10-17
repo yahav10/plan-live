@@ -1,4 +1,4 @@
-import { api, toast } from './lib.mjs';
+import { api, toast, esc } from './lib.mjs';
 import { resolveChoice, applyTheme, nextMode, nextTheme, remember, recall } from './theme.mjs';
 import { renderStrip, fmtAge } from './components/strip.mjs';
 import { renderHero } from './components/hero.mjs';
@@ -8,6 +8,7 @@ import { hydrateMermaid } from './components/mermaid.mjs';
 import { attachPanZoom } from './components/dag.mjs';
 import { renderRail, anchorLabel } from './components/review.mjs';
 import { filterSections, renderJumpRows, renderSpine, renderPill } from './components/jump.mjs';
+import { runnable, blockedBy } from './components/run.mjs';
 import { exportName, toCsv, reviewMarkdown, download, diagramSvg, svgToPng, standaloneHtml } from './export.mjs';
 
 const calm = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -400,7 +401,7 @@ document.addEventListener('click', e => {
 document.addEventListener('keydown', e => {
   if ((e.metaKey || e.ctrlKey) && !e.altKey && e.key.toLowerCase() === 'k') { e.preventDefault(); toggleJump(); return; }
   if (e.key === 'Escape' && state.jump.open) { e.preventDefault(); closeJump(); return; }
-  if (!state.plan || e.target.closest('input, textarea, [contenteditable]') || e.metaKey || e.ctrlKey || e.altKey) return;
+  if (!state.plan || e.target.closest('input, textarea, [contenteditable], dialog') || e.metaKey || e.ctrlKey || e.altKey) return;
   const fn = keymap[e.key.toLowerCase()] ?? (e.key === 'Enter' ? keymap.enter : null);
   if (fn) { e.preventDefault(); fn(); }
 });
@@ -501,12 +502,42 @@ async function applyBatch() {
   }
 }
 
+async function openRunConfirm(sectionId) {
+  const { model } = state.plan, dlg = $('confirm');
+  const sec = model.sections.find(s => s.id === sectionId);
+  if (!sec || !runnable(model, sectionId)) return;
+  const blockers = blockedBy(model, sectionId);
+  const listening = await api('GET', '/api/status').then(s => s.watcherConnected, () => true);
+  dlg.dataset.sec = sectionId;
+  dlg.innerHTML = `<h3 id="confirm-title">Run “${esc(sec.heading)}”?</h3>`
+    + '<p>Claude will work through the unchecked steps in this section and tick them off. It still asks permission in Claude Code before running anything that needs it.</p>'
+    + (blockers.length ? `<p class="warn">Not finished yet: ${esc(blockers.join(', '))}. This section depends on ${blockers.length === 1 ? 'it' : 'them'}. You can still queue it.</p>` : '')
+    + (listening ? '' : '<p class="hint">Claude is not watching this plan right now. Start <code>/plan-live</code> in Claude Code, then press Apply.</p>')
+    + '<p class="hint">Queued runs go out with your next Apply.</p>'
+    + '<div class="actions"><button class="btn" data-act="run-cancel">Cancel</button><button class="btn yes" data-act="run-confirm">Queue run</button></div>';
+  dlg.showModal();
+}
+
+async function queueRun() {
+  const dlg = $('confirm'), sectionId = dlg.dataset.sec;
+  dlg.close();
+  try {
+    await api('POST', '/api/comments', { anchor: { sectionId }, kind: 'run' });
+    toast('Run queued. Press Apply to send it to Claude.');
+  } catch (e) {
+    toast(e.message);
+  }
+}
+
 const revisionAction = action => async el => {
   try { await api('POST', `/api/revisions/${el.dataset.id}`, { action }); } catch (e) { toast(e.message); }
 };
 
 Object.assign(actions, {
   apply: applyBatch,
+  run: el => openRunConfirm(el.dataset.sec),
+  'run-cancel': () => $('confirm').close(),
+  'run-confirm': queueRun,
   'open-composer': () => openComposer(),
   'cancel-comment': closeComposer,
   'comment-selection': () => openComposer(state.selAnchor),

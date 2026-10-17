@@ -73,3 +73,16 @@ test('formatBatch without a model keeps the old output', () => {
   assert.ok(!t.includes('Plan outline'));
   assert.ok(!t.includes('context:'));
 });
+
+test('a run request tells Claude to execute the section and tick the boxes, with its line range', async () => {
+  const { parse } = await import('../../server/parse.mjs');
+  const md = '## Goals\n- a\n\n### Task 1: Parser\n- [ ] one\n- [ ] two\n';
+  const model = parse(md);
+  const run = { id: 'c_7', kind: 'run', body: 'Run this section', anchor: { sectionId: model.sections[1].id } };
+  const t = formatBatch({ batch: { id: 'b_1', commentIds: ['c_7'] }, comments: [run], plan: '/p/plan.md', cli: '/c.mjs', model, lineCount: 6 });
+  assert.match(t, /\[c_7\] run on § task-1-parser/);
+  assert.match(t, /context: lines 4-6/);
+  assert.match(t, /Execute this section: work through its unchecked steps in order, tick each checkbox in the plan as you finish it/);
+  assert.match(t, /stop at the first step you cannot complete/);
+  assert.ok(!t.includes('> Run this section'), 'the default body is not echoed as a quote');
+});

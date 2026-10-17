@@ -59,3 +59,25 @@ test('composer is hidden on load and closes after saving a draft', async ({ page
   await expect(page.locator('#rail-top .cmt')).toHaveCount(1);
   await expect(page.locator('#composer')).toBeHidden();
 });
+
+test('a task section can be queued to run: confirm, warning about unfinished dependencies, then Apply', async ({ page, plan }) => {
+  await page.goto(plan.url);
+  await expect(page.locator('#goals .run')).toHaveCount(0);
+  const t2 = page.locator('section.card', { has: page.locator('h2', { hasText: 'Task 2' }) });
+  await t2.locator('.run').click();
+  await expect(page.locator('#confirm')).toBeVisible();
+  await expect(page.locator('#confirm')).toContainText('Task 2');
+  await expect(page.locator('#confirm .warn')).toContainText('T1');
+  await page.locator('#confirm [data-act=run-cancel]').click();
+  await expect(page.locator('#confirm')).toBeHidden();
+  await expect(page.locator('.rail .cmt')).toHaveCount(0);
+  await t2.locator('.run').click();
+  await page.locator('#confirm [data-act=run-confirm]').click();
+  await expect(page.locator('.rail .cmt', { hasText: 'Run' })).toHaveCount(1);
+  await expect(t2.locator('.run')).toBeDisabled();
+  await expect(t2.locator('.run')).toHaveText('Queued');
+  await page.locator('.apply').click();
+  await expect(t2.locator('.run')).toHaveText('Running…');
+  const batch = await plan.api('GET', '/api/wait?nowait=1');
+  expect(batch.text).toMatch(/run on § task-2-server/);
+});

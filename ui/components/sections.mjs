@@ -1,4 +1,5 @@
 import { esc, inline, hashStr } from '../lib.mjs';
+import { renderRunButton } from './run.mjs';
 
 const openCount = (comments, pred) => comments.filter(c => (c.status === 'draft' || c.status === 'queued') && pred(c)).length;
 const badge = n => (n ? `<span class="pill c">💬 ${n}</span>` : '');
@@ -35,7 +36,7 @@ export function renderSections({ plan, review }, visual) {
   const graphHtml = visual?.graph?.(model) ?? '';
   const cards = model.sections.map((s, n) => {
     const count = openCount(comments, c => c.anchor.sectionId === s.id && !c.anchor.taskId);
-    return `<section class="card" id="${esc(s.id)}" data-sec="${esc(s.id)}"><h2 data-n="${String(n + 1).padStart(2, '0')}">${inline(s.heading)}${badge(count)}</h2>`
+    return `<section class="card" id="${esc(s.id)}" data-sec="${esc(s.id)}"><h2 data-n="${String(n + 1).padStart(2, '0')}">${inline(s.heading)}${badge(count)}${renderRunButton({ model, sectionId: s.id, comments })}</h2>`
       + `${s.blocks.map((b, i) => renderBlock(b, ctxFor(s.id, i))).join('')}</section>`;
   }).join('');
   return introHtml + graphHtml + cards;

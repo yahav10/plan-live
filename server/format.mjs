@@ -37,6 +37,10 @@ export function formatBatch({ batch, comments, plan, cli, model, lineCount = 0 }
       const r = c.orphaned ? null : ranges.byId.get(c.anchor.sectionId);
       out.push(r ? `  context: lines ${r[0]}-${r[1]}` : '  context: not found, read the whole plan');
     }
+    if (c.kind === 'run') {
+      out.push('  Execute this section: work through its unchecked steps in order, tick each checkbox in the plan as you finish it, and stop at the first step you cannot complete (say why in the resolve note).', '');
+      continue;
+    }
     if (c.anchor.quote && !c.anchor.taskId) out.push(`  quote: "${c.anchor.quote}"`);
     if (c.kind === 'suggestion') {
       out.push(`  replace: "${c.anchor.quote ?? ''}"`);
