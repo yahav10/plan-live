@@ -44,6 +44,8 @@ await open('editorial', 'light');
 await shot('hero-editorial-light');
 await open('blueprint', 'dark');
 await shot('hero-blueprint-dark');
+await open('fluid', 'light');
+await shot('hero-fluid-light');
 await open('aurora', 'light');
 await shot('hero-aurora-light');
 

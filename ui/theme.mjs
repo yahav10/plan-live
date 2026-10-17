@@ -1,4 +1,4 @@
-export const THEMES = { aurora: 'Aurora', editorial: 'Editorial', blueprint: 'Blueprint' };
+export const THEMES = { aurora: 'Aurora', editorial: 'Editorial', blueprint: 'Blueprint', fluid: 'Fluid' };
 export const MODES = ['auto', 'light', 'dark'];
 const ICON = { auto: '◐', light: '☀', dark: '☾' };
 

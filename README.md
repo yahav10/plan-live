@@ -165,13 +165,14 @@ The top bar shows one pill with the section you are reading and a ring that fill
 
 ## Themes
 
-Three themes, each in light and dark. Switch from the top bar or press `T` and `D`.
+Four themes, each in light and dark. Switch from the top bar or press `T` and `D`.
 
 <table>
 <tr>
-<td align="center" width="33%"><img src="docs/screenshots/hero-aurora-dark.png" alt="Aurora dark"><br><b>Aurora</b><br><sub>gradient glow, soft glass</sub></td>
-<td align="center" width="33%"><img src="docs/screenshots/hero-editorial-light.png" alt="Editorial light"><br><b>Editorial</b><br><sub>serif type, paper, sticky-note comments</sub></td>
-<td align="center" width="33%"><img src="docs/screenshots/hero-blueprint-dark.png" alt="Blueprint dark"><br><b>Blueprint</b><br><sub>drafting grid, corner brackets, marching dashes</sub></td>
+<td align="center" width="25%"><img src="docs/screenshots/hero-aurora-dark.png" alt="Aurora dark"><br><b>Aurora</b><br><sub>gradient glow, soft glass</sub></td>
+<td align="center" width="25%"><img src="docs/screenshots/hero-editorial-light.png" alt="Editorial light"><br><b>Editorial</b><br><sub>serif type, paper, sticky-note comments</sub></td>
+<td align="center" width="25%"><img src="docs/screenshots/hero-blueprint-dark.png" alt="Blueprint dark"><br><b>Blueprint</b><br><sub>drafting grid, corner brackets, marching dashes</sub></td>
+<td align="center" width="25%"><img src="docs/screenshots/hero-fluid-light.png" alt="Fluid light"><br><b>Fluid</b><br><sub>system font, frosted materials, one blue accent</sub></td>
 </tr>
 </table>
 
@@ -243,7 +244,7 @@ Want to see everything at once? Open the bundled example:
 **Command**
 
 ```
-/plan-live [plan.md] [--theme aurora|editorial|blueprint] [--mode auto|light|dark]
+/plan-live [plan.md] [--theme aurora|editorial|blueprint|fluid] [--mode auto|light|dark]
 ```
 
 **Keyboard**
@@ -331,6 +332,14 @@ Regenerate the README visuals from the bundled example plan with `npm run screen
 See [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request, [SECURITY.md](SECURITY.md) to report a vulnerability, and [CHANGELOG.md](CHANGELOG.md) for what changed.
 
 Design notes and decisions live in [`docs/superpowers/specs/`](docs/superpowers/specs/2026-10-08-plan-live-design.md).
+
+## Help wanted
+
+plan-live is young and I would like to hear where it breaks.
+
+- Windows is untested. If you try it there, open an issue with what happened, good or bad.
+- An idea I would take a pull request for: PDF page breaks.
+- If it saved you time on a long plan, a star helps other people find it.
 
 ## License
 

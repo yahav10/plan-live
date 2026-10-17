@@ -2,6 +2,20 @@
 
 All notable changes to plan-live. Versions follow [semver](https://semver.org).
 
+## Unreleased
+
+### Added
+- Fluid theme (light and dark): system font with size-specific tracking, frosted translucent materials that get thicker with surface size, one blue accent, round checkboxes, and solid fallbacks for reduced transparency and increased contrast.
+
+### Changed
+- Each theme now has its own look and feel, not just its own colours. Aurora is a floating glass bar and frosted cards with a spotlight that follows the pointer and a soft-bounce spring. Editorial is a letterhead bar, stacked paper sheets, ruled rows, a slow ease and a stamp that presses down. Blueprint is a title-block bar, ruler ticks, a double sheet frame, hatch on hover and stepped motion. Fluid dims and pushes the page back while the jump panel is open.
+- Dragging the architecture graph now has a 4px threshold, resists at the edges, and glides on release. A drag no longer toggles node focus.
+- Hover and entrance motion settle without overshoot. Bounce is kept for the checkbox pop only, and that pop is smaller.
+- Buttons, rows and tasks respond on press, not only on release.
+- Menus, the jump panel and the top bar are translucent layers. A soft fade replaces the hard line under the top bar.
+- Reduced motion now keeps short colour and opacity fades instead of removing all feedback. Reduced transparency and increased contrast are respected.
+- Headings use tighter tracking, and body and heading sizes scale with the browser text size.
+
 ## 0.3.2
 
 - Each review batch now lists the line range of every commented section and an outline of the plan with line numbers. The skill tells Claude to read just those ranges, and the whole plan only when a comment needs other sections or has no range.

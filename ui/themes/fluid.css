@@ -1,0 +1,50 @@
+[data-theme="fluid"] {
+  --font-body: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, 'Segoe UI', sans-serif;
+  --font-display: -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, 'Segoe UI', sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  --display-w: 700; --display-ls: -.034em; --h-w: 600; --r: 20px;
+}
+[data-theme="fluid"][data-mode="light"] {
+  --bg: #f2f2f7; --card: rgba(255,255,255,.72); --rail: rgba(255,255,255,.5); --ink: #1c1c1e; --ink-2: #3a3a3c; --muted: #636366;
+  --line: rgba(60,60,67,.14); --line-strong: rgba(60,60,67,.3); --accent: #0071e3; --accent-ink: #0066cc; --accent-soft: rgba(0,113,227,.11);
+  --ok: #1d7a37; --warn: #a24b00; --note: #c7225a; --note-soft: rgba(199,34,90,.1); --chip: rgba(120,120,128,.14); --hover: rgba(0,0,0,.035);
+  --track: rgba(120,120,128,.2); --node: #ffffff; --node-stroke: rgba(60,60,67,.22); --edge: rgba(60,60,67,.38);
+  --del: #c4001a; --del-bg: rgba(255,59,48,.1); --add: #1a7f37; --add-bg: rgba(52,199,89,.13);
+  --apply-bg: #0071e3; --apply-ink: #ffffff; --apply-shadow: 0 8px 20px -8px rgba(0,113,227,.55);
+  --rim: rgba(255,255,255,.85); --card-solid: #ffffff; --wall-a: rgba(120,170,255,.34); --wall-b: rgba(200,160,255,.26);
+}
+[data-theme="fluid"][data-mode="dark"] {
+  --bg: #000000; --card: rgba(44,44,46,.62); --rail: rgba(28,28,30,.72); --ink: #f5f5f7; --ink-2: #d2d2d7; --muted: #98989f;
+  --line: rgba(255,255,255,.1); --line-strong: rgba(255,255,255,.22); --accent: #0a84ff; --accent-ink: #4aa3ff; --accent-soft: rgba(10,132,255,.2);
+  --ok: #30d158; --warn: #ff9f0a; --note: #ff6482; --note-soft: rgba(255,100,130,.16); --chip: rgba(255,255,255,.1); --hover: rgba(255,255,255,.05);
+  --track: rgba(255,255,255,.14); --node: #1c1c1e; --node-stroke: rgba(255,255,255,.2); --edge: rgba(255,255,255,.3);
+  --del: #ff7a70; --del-bg: rgba(255,69,58,.15); --add: #32d74b; --add-bg: rgba(48,209,88,.14);
+  --apply-bg: #0071e3; --apply-ink: #ffffff; --apply-shadow: 0 10px 24px -10px rgba(10,132,255,.7);
+  --rim: rgba(255,255,255,.14); --card-solid: #1c1c1e; --wall-a: rgba(10,60,140,.55); --wall-b: rgba(70,30,120,.45);
+}
+[data-theme="fluid"] body::before { content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none; background: radial-gradient(60% 46% at 12% 0%, var(--wall-a), transparent 72%), radial-gradient(48% 42% at 92% 8%, var(--wall-b), transparent 72%); }
+[data-theme="fluid"] .card { backdrop-filter: blur(28px) saturate(180%); box-shadow: inset 0 1px 0 var(--rim), 0 20px 40px -30px rgba(0,0,0,.35); }
+[data-theme="fluid"] .card:hover { box-shadow: inset 0 1px 0 var(--rim), 0 24px 44px -28px rgba(0,0,0,.4); }
+[data-theme="fluid"] .rail { backdrop-filter: blur(40px) saturate(160%); }
+[data-theme="fluid"] .tbtn, [data-theme="fluid"] .ibtn, [data-theme="fluid"] .composer, [data-theme="fluid"] .btn { border-color: transparent; background: var(--chip); }
+[data-theme="fluid"] .tbtn:hover, [data-theme="fluid"] .ibtn:hover { background: var(--line); }
+[data-theme="fluid"] .btn.yes { background: var(--ok); color: #fff; }
+[data-theme="fluid"][data-mode="dark"] .btn.yes { color: #000; }
+[data-theme="fluid"] h1.title { font-size: 2.75rem; line-height: 1.04; }
+[data-theme="fluid"] .card > h2 { font-size: 1.3125rem; letter-spacing: -.02em; }
+[data-theme="fluid"] .eyebrow, [data-theme="fluid"] th, [data-theme="fluid"] .menu-h { font-family: var(--font-body); font-weight: 600; letter-spacing: .06em; }
+[data-theme="fluid"] .cb { border-radius: 50%; }
+[data-theme="fluid"] .cmt { border-radius: 16px; }
+[data-theme="fluid"] .apply { border-radius: 14px; font-weight: 600; letter-spacing: -.005em; }
+[data-theme="fluid"] .pill, [data-theme="fluid"] .chip { font-family: var(--font-body); }
+[data-theme="fluid"] .approach.pick { box-shadow: 0 0 0 1px var(--accent) inset, 0 16px 34px -24px var(--accent); }
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+  [data-theme="fluid"] .card, [data-theme="fluid"] .rail { background: var(--card-solid); backdrop-filter: none; }
+  [data-theme="fluid"] body::before { display: none; }
+}
+
+/* dim to focus: a modal task dims the page and pushes it back, a parallel panel would not */
+[data-theme="fluid"] body::after { content: ""; position: fixed; inset: 0; z-index: 15; pointer-events: none; background: rgba(0,0,0,.2); opacity: 0; transition: opacity .3s var(--settle); }
+[data-theme="fluid"] body:has(.jump.in)::after { opacity: 1; }
+[data-theme="fluid"] main { transition: transform .4s var(--settle), filter .4s var(--settle); }
+[data-theme="fluid"] body:has(.jump.in) main { transform: scale(.992); filter: saturate(.9); }

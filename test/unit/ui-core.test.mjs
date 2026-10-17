@@ -35,7 +35,8 @@ test('theme choice precedence: url > storage > defaults > built-in', () => {
   assert.deepEqual(resolveChoice({ theme: 'blueprint' }, '', storage), { theme: 'editorial', mode: 'auto' });
   assert.deepEqual(resolveChoice({}, '?theme=nope', { get: () => null }), { theme: 'aurora', mode: 'auto' });
   assert.equal(nextMode('dark'), 'auto');
-  assert.equal(nextTheme('blueprint'), 'aurora');
+  assert.equal(nextTheme('blueprint'), 'fluid');
+  assert.equal(nextTheme('fluid'), 'aurora');
 });
 
 test('strip: one pill for the active section, no tab row, compact age', () => {

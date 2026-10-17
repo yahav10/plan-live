@@ -1,6 +1,6 @@
 import { test, expect } from './fixture.mjs';
 
-for (const theme of ['aurora', 'editorial', 'blueprint']) {
+for (const theme of ['aurora', 'editorial', 'blueprint', 'fluid']) {
   for (const mode of ['light', 'dark']) {
     test(`${theme} ${mode} snapshot`, async ({ page, plan }) => {
       await page.emulateMedia({ reducedMotion: 'reduce' });

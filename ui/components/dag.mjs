@@ -1,4 +1,5 @@
 import { esc } from '../lib.mjs';
+import { resist, releaseVelocity, decayed } from './momentum.mjs';
 
 const W = 180, H = 56, GX = 70, GY = 22, PAD = 32;
 const trunc = (s, n) => (s.length > n ? s.slice(0, n - 1) + '…' : s);
@@ -55,24 +56,68 @@ export function renderDag(nodes, edges, { active, zoomable = false } = {}) {
 export function attachPanZoom(svg) {
   if (svg._pz) return;
   svg._pz = true;
-  let [x, y, w, h] = svg.getAttribute('viewBox').split(' ').map(Number), drag = null;
+  const home = svg.getAttribute('viewBox').split(' ').map(Number);
+  let [x, y, w, h] = home, drag = null, raf = 0, swallow = false;
+  const calm = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
   const set = () => svg.setAttribute('viewBox', `${x} ${y} ${w} ${h}`);
+  const bounds = () => ({ x: [home[0] - w / 2, home[0] + home[2] - w / 2], y: [home[1] - h / 2, home[1] + home[3] - h / 2] });
+  const stop = () => { cancelAnimationFrame(raf); raf = 0; };
+  const settle = (vx, vy) => {
+    stop();
+    let last = performance.now();
+    const step = now => {
+      const dt = Math.min(now - last, 50); last = now;
+      const b = bounds();
+      [vx, vy] = [decayed(vx, dt), decayed(vy, dt)];
+      x += (vx * dt) / 1000; y += (vy * dt) / 1000;
+      const pull = () => 1 - Math.exp(-dt / 90);
+      if (x < b.x[0] || x > b.x[1]) { x += (Math.min(Math.max(x, b.x[0]), b.x[1]) - x) * pull(); vx = 0; }
+      if (y < b.y[0] || y > b.y[1]) { y += (Math.min(Math.max(y, b.y[0]), b.y[1]) - y) * pull(); vy = 0; }
+      set();
+      const inside = x >= b.x[0] - .5 && x <= b.x[1] + .5 && y >= b.y[0] - .5 && y <= b.y[1] + .5;
+      raf = Math.hypot(vx, vy) < 2 && inside ? 0 : requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+  };
   svg.addEventListener('wheel', e => {
     e.preventDefault();
-    const k = e.deltaY > 0 ? 1.1 : 0.9, r = svg.getBoundingClientRect();
-    const fx = (e.clientX - r.left) / r.width, fy = (e.clientY - r.top) / r.height;
-    x += w * (1 - k) * fx; y += h * (1 - k) * fy; w *= k; h *= k;
+    stop();
+    const k = Math.min(Math.max(Math.exp(Math.max(-60, Math.min(60, e.deltaY)) * 0.0016), 0.8), 1.25);
+    const nw = Math.min(Math.max(w * k, home[2] * 0.25), home[2] * 3), f = nw / w;
+    const r = svg.getBoundingClientRect(), fx = (e.clientX - r.left) / r.width, fy = (e.clientY - r.top) / r.height;
+    x += w * (1 - f) * fx; y += h * (1 - f) * fy; w *= f; h *= f;
     set();
   }, { passive: false });
-  svg.addEventListener('pointerdown', e => { drag = { cx: e.clientX, cy: e.clientY, x, y }; svg.setPointerCapture(e.pointerId); });
+  svg.addEventListener('pointerdown', e => {
+    stop();
+    drag = { cx: e.clientX, cy: e.clientY, x, y, moved: false, hist: [{ t: e.timeStamp, x: e.clientX, y: e.clientY }] };
+  });
   svg.addEventListener('pointermove', e => {
     if (!drag) return;
-    const r = svg.getBoundingClientRect();
-    x = drag.x - ((e.clientX - drag.cx) * w) / r.width;
-    y = drag.y - ((e.clientY - drag.cy) * h) / r.height;
+    if (!drag.moved && Math.hypot(e.clientX - drag.cx, e.clientY - drag.cy) < 4) return;
+    if (!drag.moved) svg.setPointerCapture(e.pointerId);
+    drag.moved = true;
+    drag.hist.push({ t: e.timeStamp, x: e.clientX, y: e.clientY });
+    drag.hist = drag.hist.slice(-8);
+    const r = svg.getBoundingClientRect(), b = bounds();
+    x = resist(drag.x - ((e.clientX - drag.cx) * w) / r.width, b.x[0], b.x[1], w);
+    y = resist(drag.y - ((e.clientY - drag.cy) * h) / r.height, b.y[0], b.y[1], h);
     set();
   });
-  svg.addEventListener('pointerup', () => { drag = null; });
+  const release = e => {
+    if (!drag) return;
+    const { moved, hist } = drag;
+    drag = null;
+    if (!moved) return;
+    swallow = true;
+    setTimeout(() => { swallow = false; }, 0);
+    const r = svg.getBoundingClientRect(), v = releaseVelocity(hist, e.timeStamp);
+    if (calm()) { const b = bounds(); x = Math.min(Math.max(x, b.x[0]), b.x[1]); y = Math.min(Math.max(y, b.y[0]), b.y[1]); set(); return; }
+    settle((-v.x * w) / r.width, (-v.y * h) / r.height);
+  };
+  svg.addEventListener('pointerup', release);
+  svg.addEventListener('pointercancel', release);
+  svg.addEventListener('click', e => { if (swallow) { e.stopPropagation(); e.preventDefault(); } }, true);
   svg.addEventListener('click', e => {
     const key = e.target.closest('[data-node]')?.dataset.node;
     svg.classList.toggle('focus', !!key);
