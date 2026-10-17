@@ -2,7 +2,7 @@
 
 All notable changes to plan-live. Versions follow [semver](https://semver.org).
 
-## Unreleased
+## 0.5.0
 
 ### Added
 - Run a section. Task sections with unfinished steps get a Run button. A confirm warns about unfinished dependencies and whether Claude is watching, then queues a run request that goes out with the next Apply. Claude works through the unchecked steps and ticks them in the plan as it goes.
