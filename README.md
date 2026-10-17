@@ -15,7 +15,7 @@
 
 <br>
 
-<img src="docs/screenshots/demo.gif" alt="plan-live in action: jump between sections with Ctrl+K, turn on the reading spine, write a comment, press Apply, switch themes, open the export menu" width="860">
+<img src="docs/screenshots/demo.gif" alt="plan-live in action: hover a card, jump to a task with Ctrl+K, tick it, write a comment, press Apply, then tour the four themes, open the jump panel and flick the architecture graph" width="860">
 
 </div>
 
