@@ -2,7 +2,7 @@
 
 All notable changes to plan-live. Versions follow [semver](https://semver.org).
 
-## Unreleased
+## 0.6.1
 
 ### Fixed
 - Windows: plan paths are compared without regard to case. A drive letter or folder reported in a different case (`c:\` against `C:\`) no longer makes the hooks, `status`, `resolve` and `watch` miss the running server. Linux and macOS stay case-sensitive.
