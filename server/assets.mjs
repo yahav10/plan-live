@@ -1,11 +1,12 @@
 import { realpath, stat } from 'node:fs/promises';
-import { resolve, extname, sep, isAbsolute } from 'node:path';
+import { resolve, extname, isAbsolute, posix, win32 } from 'node:path';
 
 export const MAX_ASSET = 25 * 1024 * 1024;
 
 export function inside(root, path, plat = process.platform) {
   const fold = p => (plat === 'win32' ? p.toLowerCase() : p);
-  return fold(path).startsWith(fold(root) + (plat === 'win32' ? '\\' : sep));
+  // The separator follows `plat`, not the machine running this: path.sep is '\' on any Windows host.
+  return fold(path).startsWith(fold(root) + (plat === 'win32' ? win32.sep : posix.sep));
 }
 const TYPES = {
   '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.gif': 'image/gif',
