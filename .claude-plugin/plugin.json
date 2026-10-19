@@ -1,6 +1,6 @@
 {
   "name": "plan-live",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "Open a markdown plan as a live, themeable HTML page. Comment, press Apply, and Claude revises the plan; accept or reject each change.",
   "author": { "name": "Tom Yahav" },
   "license": "MIT",

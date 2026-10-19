@@ -2,7 +2,7 @@
 
 All notable changes to plan-live. Versions follow [semver](https://semver.org).
 
-## Unreleased
+## 0.6.0
 
 ### Added
 - Images in plans. `![alt](path "caption")` on its own line shows an image from the plan's folder (png, jpg, gif, webp, avif, svg). Nothing outside the folder is served, and remote images are not loaded.
