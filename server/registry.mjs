@@ -1,22 +1,25 @@
 import { mkdirSync, readdirSync, readFileSync, writeFileSync, rmSync } from 'node:fs';
-import { join, resolve, sep } from 'node:path';
+import { join, resolve, sep, win32 } from 'node:path';
 import { homedir } from 'node:os';
 import { createHash } from 'node:crypto';
 
 export const home = () => process.env.PLAN_LIVE_HOME ?? join(homedir(), '.claude', 'plan-live');
 const dir = () => join(home(), 'servers');
-const fileFor = plan => join(dir(), createHash('sha1').update(resolve(plan)).digest('hex') + '.json');
+const abs = (p, plat) => (plat === 'win32' ? win32.resolve(p) : resolve(p));
+// Windows paths are case-insensitive and tools disagree on the drive letter's case, so compare them folded.
+export const pathKey = (p, plat = process.platform) => (plat === 'win32' ? abs(p, plat).toLowerCase() : abs(p, plat));
+const fileFor = (plan, plat) => join(dir(), createHash('sha1').update(pathKey(plan, plat)).digest('hex') + '.json');
 const alive = pid => {
   try { process.kill(pid, 0); return true; } catch (e) { return e.code === 'EPERM'; }
 };
 
-export function register(entry) {
+export function register(entry, plat = process.platform) {
   mkdirSync(dir(), { recursive: true, mode: 0o700 });
-  writeFileSync(fileFor(entry.plan), JSON.stringify({ ...entry, plan: resolve(entry.plan) }), { mode: 0o600 });
+  writeFileSync(fileFor(entry.plan, plat), JSON.stringify({ ...entry, plan: abs(entry.plan, plat) }), { mode: 0o600 });
 }
 
-export function unregister(plan) {
-  rmSync(fileFor(plan), { force: true });
+export function unregister(plan, plat = process.platform) {
+  rmSync(fileFor(plan, plat), { force: true });
 }
 
 export function list() {
@@ -36,9 +39,11 @@ export function list() {
   return out;
 }
 
-export const lookup = plan => list().find(e => e.plan === resolve(plan)) ?? null;
+export const lookup = (plan, plat = process.platform) => list().find(e => pathKey(e.plan, plat) === pathKey(plan, plat)) ?? null;
 
-export function forCwd(cwd) {
-  const root = resolve(cwd) + sep;
-  return list().filter(e => e.plan.startsWith(root));
+export function forCwd(cwd, plat = process.platform) {
+  const s = plat === 'win32' ? '\\' : sep;
+  const base = pathKey(cwd, plat);
+  const root = base.endsWith(s) ? base : base + s;
+  return list().filter(e => pathKey(e.plan, plat).startsWith(root));
 }

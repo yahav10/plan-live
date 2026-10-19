@@ -2,6 +2,11 @@ import { realpath, stat } from 'node:fs/promises';
 import { resolve, extname, sep, isAbsolute } from 'node:path';
 
 export const MAX_ASSET = 25 * 1024 * 1024;
+
+export function inside(root, path, plat = process.platform) {
+  const fold = p => (plat === 'win32' ? p.toLowerCase() : p);
+  return fold(path).startsWith(fold(root) + (plat === 'win32' ? '\\' : sep));
+}
 const TYPES = {
   '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.gif': 'image/gif',
   '.webp': 'image/webp', '.avif': 'image/avif', '.svg': 'image/svg+xml',
@@ -18,7 +23,7 @@ export async function resolveAsset(root, rel) {
   } catch {
     return { ok: false, code: 404 };
   }
-  if (!real.startsWith(rootReal + sep)) return { ok: false, code: 403 };
+  if (!inside(rootReal, real)) return { ok: false, code: 403 };
   const info = await stat(real).catch(() => null);
   if (!info?.isFile()) return { ok: false, code: 404 };
   if (info.size > MAX_ASSET) return { ok: false, code: 413 };

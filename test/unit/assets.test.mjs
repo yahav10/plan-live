@@ -63,3 +63,13 @@ test('embed theme tokens are filtered to known names and safe values before they
   assert.match(html, /:root\{[^}]*--accent:#0071e3/);
   assert.ok(!html.includes('display:none') && !html.includes('alert(1)') && !html.includes('https://x.dev'));
 });
+
+test('the folder check ignores case on Windows only', async () => {
+  const { inside } = await import('../../server/assets.mjs');
+  assert.equal(inside('C:\\Plans', 'c:\\plans\\a.png', 'win32'), true);
+  assert.equal(inside('C:\\Plans', 'c:\\plans2\\a.png', 'win32'), false);
+  assert.equal(inside('C:\\Plans', 'D:\\plans\\a.png', 'win32'), false);
+  assert.equal(inside('/plans', '/plans/a.png', 'linux'), true);
+  assert.equal(inside('/Plans', '/plans/a.png', 'linux'), false);
+  assert.equal(inside('/plans', '/plans2/a.png', 'linux'), false);
+});

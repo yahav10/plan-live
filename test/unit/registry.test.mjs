@@ -45,3 +45,30 @@ test('registry entries holding the session key are owner-only', () => {
   assert.equal(statSync(dir).mode & 0o077, 0);
   for (const f of readdirSync(dir)) assert.equal(statSync(join(dir, f)).mode & 0o077, 0);
 });
+
+test('on Windows a plan is found whatever the case of the drive letter and folders', () => {
+  reg.register({ pid: process.pid, port: 6, key: 'k', url: 'u', plan: 'C:\\Users\\Tom\\Plans\\p.md' }, 'win32');
+  assert.equal(reg.lookup('c:\\users\\tom\\plans\\p.md', 'win32')?.port, 6);
+  assert.equal(reg.lookup('C:\\USERS\\Tom\\plans\\P.MD', 'win32')?.port, 6);
+  assert.equal(reg.lookup('c:/Users/Tom/Plans/p.md', 'win32')?.port, 6, 'forward slashes name the same file');
+  assert.equal(reg.lookup('C:\\Users\\Tom\\Plans\\other.md', 'win32'), null);
+  assert.equal(reg.list().find(e => e.port === 6).plan, 'C:\\Users\\Tom\\Plans\\p.md', 'the stored path keeps its original case');
+  reg.unregister('c:\\users\\tom\\plans\\p.md', 'win32');
+  assert.equal(reg.lookup('C:\\Users\\Tom\\Plans\\p.md', 'win32'), null, 'unregister also ignores case');
+});
+
+test('on Windows the hooks find servers under a cwd reported in another case', () => {
+  reg.register({ pid: process.pid, port: 7, key: 'k', url: 'u', plan: 'C:\\Work\\Repo\\docs\\p.md' }, 'win32');
+  reg.register({ pid: process.pid, port: 8, key: 'k', url: 'u', plan: 'C:\\Work\\Repo-two\\p.md' }, 'win32');
+  assert.deepEqual(reg.forCwd('c:\\work\\repo', 'win32').map(e => e.port), [7]);
+  assert.deepEqual(reg.forCwd('C:\\WORK\\REPO\\', 'win32').map(e => e.port), [7]);
+  assert.deepEqual(reg.forCwd('c:\\work', 'win32').map(e => e.port).sort(), [7, 8]);
+  assert.deepEqual(reg.forCwd('c:\\', 'win32').map(e => e.port).sort(), [7, 8], 'a drive root works too');
+});
+
+test('on Linux and macOS paths stay case-sensitive', () => {
+  reg.register({ pid: process.pid, port: 9, key: 'k', url: 'u', plan: '/Work/Plans/p.md' }, 'linux');
+  assert.equal(reg.lookup('/Work/Plans/p.md', 'linux')?.port, 9);
+  assert.equal(reg.lookup('/work/plans/p.md', 'linux'), null);
+  assert.deepEqual(reg.forCwd('/work', 'linux'), []);
+});
