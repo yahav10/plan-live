@@ -123,7 +123,8 @@ test('Copy as Markdown puts the source on the clipboard and confirms with a toas
   await page.locator('[data-act=export-menu]').click();
   await page.locator('[data-fmt=copy-md]').click();
   await expect(page.locator('#toast')).toContainText('Copied');
-  expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(plan.read());
+  // The Windows clipboard hands text back with CRLF line endings, whatever was written.
+  expect((await page.evaluate(() => navigator.clipboard.readText())).replace(/\r\n/g, '\n')).toBe(plan.read());
 });
 
 test('a Mermaid diagram exports as SVG and as a real PNG', async ({ page, plan }) => {

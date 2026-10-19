@@ -39,7 +39,8 @@ test('missing registry directory is an empty list', () => {
   assert.deepEqual(reg.list(), []);
 });
 
-test('registry entries holding the session key are owner-only', () => {
+// Windows has no POSIX permission bits; the files live under the user's profile, which only they can read.
+test('registry entries holding the session key are owner-only', { skip: process.platform === 'win32' && 'no POSIX file modes on Windows' }, () => {
   reg.register({ pid: process.pid, port: 9, key: 'k', url: 'u', plan: '/x/secret.md' });
   const dir = join(reg.home(), 'servers');
   assert.equal(statSync(dir).mode & 0o077, 0);

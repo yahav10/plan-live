@@ -1,0 +1,4 @@
+# Test fixtures are compared byte for byte, so Windows checkouts must not rewrite their line endings.
+test/fixtures/*.md text eol=lf
+# crlf.md exists to test CRLF plans: keep it exactly as committed.
+test/fixtures/crlf.md -text
