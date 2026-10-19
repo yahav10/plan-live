@@ -1,5 +1,6 @@
 import { esc, inline, hashStr } from '../lib.mjs';
 import { renderRunButton } from './run.mjs';
+import { renderImage, renderEmbed } from './media.mjs';
 
 const openCount = (comments, pred) => comments.filter(c => (c.status === 'draft' || c.status === 'queued') && pred(c)).length;
 const badge = n => (n ? `<span class="pill c">💬 ${n}</span>` : '');
@@ -21,6 +22,8 @@ export function renderBlock(b, ctx) {
     case 'heading': return wrap(`<h${Math.min(b.level + 1, 5)} class="sub-h">${inline(b.text)}</h${Math.min(b.level + 1, 5)}>`);
     case 'list': return wrap(`<ul class="list">${b.items.map(it => (it.task ? renderTask(it, ctx) : `<li style="--indent:${it.indent}">${inline(it.text)}</li>`)).join('')}</ul>`);
     case 'table': return wrap(`<div class="table-wrap"><table><thead><tr>${b.head.map(h => `<th>${inline(h)}</th>`).join('')}</tr></thead><tbody>${b.rows.map(r => `<tr>${r.map(c => `<td>${inline(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`);
+    case 'image': return wrap(renderImage(b));
+    case 'embed': return wrap(renderEmbed(b));
     case 'code': return wrap(`<pre class="code"><code>${esc(b.code)}</code></pre>${b.error ? `<div class="block-error">Couldn't parse ${esc(b.lang)} block: ${esc(b.error)}</div>` : ''}`);
     default: return ctx.visual?.(b, wrap) ?? wrap(`<pre class="code"><code>${esc(JSON.stringify(b, null, 2))}</code></pre>`);
   }

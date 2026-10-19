@@ -169,6 +169,29 @@ Task sections with unfinished steps get a **Run** button. Click it, read the con
 
 Runs travel the same loop as comments, so the watcher must be running (the confirm tells you if it is not), and Claude Code still asks permission before running anything that needs it. Only plan edits come back as diffs to accept or reject; code Claude writes elsewhere is not shown on the page.
 
+## Images and animation
+
+Put an image on its own line and it shows up in the page:
+
+```
+![Pipeline](pipeline.svg "A caption")
+```
+
+Paths are relative to the plan's folder. plan-live serves png, jpg, gif, webp, avif and svg from there and nothing else, never anything outside the folder, and never your plan or review files. Remote images are not loaded, so opening a plan cannot ping a tracker.
+
+For a small animation, use an `embed` block with HTML, CSS and JavaScript in it (add `height=240` to set its height):
+
+````
+```embed height=240
+<style>.dot { animation: beat 1.4s infinite; }</style>
+<i class="dot"></i>
+```
+````
+
+An embed is click to run. It runs in a sandboxed frame with no access to the page, your cookies, the review API or the network, so a plan from someone else's repo cannot do anything with it. It receives the theme's colours as CSS variables (`--accent`, `--ink`, `--muted`, `--bg` and a few more), so it matches the current theme. HTML exports and PDFs replace it with a note, and an image in an export is embedded in the file. Try `docs/examples/media-plan.md`.
+
+<img src="docs/screenshots/media.png" alt="An image from the plan's folder and a running embedded animation, in the Fluid theme" width="860">
+
 ## Themes
 
 Four themes, each in light and dark. Switch from the top bar or press `T` and `D`.

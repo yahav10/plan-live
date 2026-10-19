@@ -2,6 +2,14 @@
 
 All notable changes to plan-live. Versions follow [semver](https://semver.org).
 
+## Unreleased
+
+### Added
+- Images in plans. `![alt](path "caption")` on its own line shows an image from the plan's folder (png, jpg, gif, webp, avif, svg). Nothing outside the folder is served, and remote images are not loaded.
+- Embedded animations. An `embed` fenced block holds HTML, CSS and JavaScript and runs on a click inside a sandboxed frame with no access to the page, cookies, the review API or the network. It receives the theme colours as CSS variables and has Replay and Stop controls.
+- HTML export embeds images in the file and replaces embeds with a note.
+- `docs/examples/media-plan.md` shows both.
+
 ## 0.5.0
 
 ### Added

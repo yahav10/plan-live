@@ -49,5 +49,25 @@ await shot('hero-fluid-light');
 await open('aurora', 'light');
 await shot('hero-aurora-light');
 
+{
+  const { mkdtempSync, copyFileSync } = await import('node:fs');
+  const { join } = await import('node:path');
+  const { tmpdir } = await import('node:os');
+  const { createPlanServer } = await import('../server/serve.mjs');
+  const dir = mkdtempSync(join(tmpdir(), 'plan-live-media-'));
+  for (const f of ['media-plan.md', 'pipeline.svg']) copyFileSync(fileURLToPath(new URL(`../docs/examples/${f}`, import.meta.url)), join(dir, f));
+  const media = await createPlanServer({ planPath: join(dir, 'media-plan.md') });
+  await page.goto(`${media.url}&theme=fluid&mode=light`);
+  await page.locator('h1.title').waitFor();
+  await page.waitForTimeout(500);
+  await page.locator('.embed-play').click();
+  await page.locator('.embed').scrollIntoViewIfNeeded();
+  await page.waitForTimeout(900);
+  await page.evaluate(() => scrollTo(0, document.querySelector('#a-picture-from-the-plan-s-folder')?.offsetTop - 70 || 300));
+  await page.waitForTimeout(600);
+  await shot('media');
+  await media.close();
+}
+
 await browser.close();
 await srv.close();

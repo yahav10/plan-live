@@ -115,6 +115,11 @@ async function inlineFonts(fontsCss, themeCss) {
 
 const escHtml = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
+const toDataUrl = async url => {
+  const blob = await (await fetch(url)).blob();
+  return new Promise((ok, fail) => { const r = new FileReader(); r.onload = () => ok(r.result); r.onerror = fail; r.readAsDataURL(blob); });
+};
+
 export async function standaloneHtml(file) {
   const { theme, mode } = document.documentElement.dataset;
   const get = async u => (await fetch(u)).text();
@@ -123,6 +128,10 @@ export async function standaloneHtml(file) {
   const main = document.querySelector('main').cloneNode(true);
   main.querySelectorAll('.xtools, .pill.c, .chip.warn, .marker').forEach(n => n.remove());
   main.querySelectorAll('.pulse, .anchored, .flip, .landed, .enter').forEach(n => n.classList.remove('pulse', 'anchored', 'flip', 'landed', 'enter'));
+  main.querySelectorAll('.embed').forEach(n => { const note = document.createElement('div'); note.className = 'embed-static'; note.textContent = 'Embedded animation. It runs in plan-live only.'; n.replaceWith(note); });
+  for (const img of main.querySelectorAll('.plan-img img')) {
+    try { img.setAttribute('src', await toDataUrl(img.getAttribute('src'))); } catch { img.closest('.plan-img').classList.add('blocked'); img.replaceWith(document.createTextNode('Image could not be included.')); }
+  }
   main.querySelectorAll('[data-act]').forEach(n => n.removeAttribute('data-act'));
   const title = document.title || file;
   const extra = '.grid.export { display: block; max-width: 980px; } .export-foot { max-width: 980px; margin: 0 auto; padding: 0 34px 40px; font: 12px var(--font-mono); color: var(--muted); } main { padding-bottom: 20px; }';

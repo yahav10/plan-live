@@ -128,3 +128,31 @@ test('fences indented under a list item stay code; a one-line triple-backtick sp
   assert.deepEqual(m.tasks.map(t => t.text), ['real', 'after']);
   assert.ok(!m.sections[0].blocks.some(b => b.type === 'table'));
 });
+
+test('an image on its own line becomes an image block, but not inside code or mid-sentence', () => {
+  const m = parse('## A\n![Flow chart](docs/flow.png "The flow")\n\nSee ![x](y.png) inline.\n\n```md\n![no](z.png)\n```\n');
+  const blocks = m.sections[0].blocks;
+  assert.deepEqual(blocks[0], { type: 'image', alt: 'Flow chart', src: 'docs/flow.png', title: 'The flow', line: 2 });
+  assert.equal(blocks[1].type, 'paragraph');
+  assert.equal(blocks[2].type, 'code');
+  assert.equal(blocks.filter(b => b.type === 'image').length, 1);
+});
+
+test('an embed fence becomes an embed block with a content id and a clamped height', () => {
+  const m = parse('## A\n```embed height=240\n<div>hi</div>\n```\n\n```embed\n<div>hi</div>\n```\n\n```embed height=5000\n<p>big</p>\n```\n\n```embed height=3\n<p>small</p>\n```\n');
+  const [a, b, c, d] = m.sections[0].blocks;
+  assert.equal(a.type, 'embed');
+  assert.equal(a.code, '<div>hi</div>');
+  assert.equal(a.height, 240);
+  assert.equal(b.height, 320);
+  assert.equal(a.id, b.id, 'the id comes from the code, not the position');
+  assert.match(a.id, /^[0-9a-f]{12}$/);
+  assert.notEqual(a.id, c.id);
+  assert.equal(c.height, 900);
+  assert.equal(d.height, 320, 'a height too small to parse as 3 digits falls back to the default');
+});
+
+test('other html fences stay plain code', () => {
+  const m = parse('## A\n```html\n<script>alert(1)</script>\n```\n');
+  assert.equal(m.sections[0].blocks[0].type, 'code');
+});

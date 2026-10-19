@@ -9,18 +9,20 @@ import { attachPanZoom } from './components/dag.mjs';
 import { renderRail, anchorLabel } from './components/review.mjs';
 import { filterSections, renderJumpRows, renderSpine, renderPill } from './components/jump.mjs';
 import { runnable, blockedBy } from './components/run.mjs';
+import { playEmbed, stopEmbed, pushEmbedTokens } from './components/media.mjs';
 import { exportName, toCsv, reviewMarkdown, download, diagramSvg, svgToPng, standaloneHtml } from './export.mjs';
 
 const calm = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 const smooth = () => (calm() ? 'auto' : 'smooth');
 
-export const state = { plan: null, review: { comments: [], batches: [], revisions: [] }, choice: null, online: false, active: null, anchor: null, selAnchor: null, composing: null, jump: { open: false, q: '', act: 0 }, scroll: 0, spine: false, prev: new Map(), checked: new Map(), seen: new Set() };
+export const state = { plan: null, review: { comments: [], batches: [], revisions: [] }, choice: null, online: false, active: null, anchor: null, selAnchor: null, composing: null, jump: { open: false, q: '', act: 0 }, scroll: 0, spine: false, prev: new Map(), checked: new Map(), seen: new Set(), embeds: new Set() };
 export const hooks = {
   visual,
   afterSections: (root, mode) => {
     hydrateMermaid(root, mode);
     root.querySelectorAll('svg.dag.zoomable').forEach(attachPanZoom);
     addDiagramTools(root);
+    for (const id of state.embeds) { const host = root.querySelector(`[data-embed="${id}"]`); if (host) playEmbed(host); }
   },
   renderRail,
 };
@@ -242,6 +244,7 @@ export function render() {
   state.choice ??= resolveChoice(state.plan.defaults);
   state.active ??= state.plan.model.sections[0]?.id ?? null;
   applyTheme(state.choice);
+  pushEmbedTokens();
   document.title = state.plan.model.title || state.plan.file;
   setHTML($('strip'), renderStrip(state));
   paintScroll();
@@ -536,6 +539,9 @@ const revisionAction = action => async el => {
 Object.assign(actions, {
   apply: applyBatch,
   run: el => openRunConfirm(el.dataset.sec),
+  'embed-play': el => { const host = el.closest('.embed'); state.embeds.add(host.dataset.embed); playEmbed(host); },
+  'embed-stop': el => { const host = el.closest('.embed'); state.embeds.delete(host.dataset.embed); stopEmbed(host); },
+  'embed-replay': el => playEmbed(el.closest('.embed')),
   'run-cancel': () => $('confirm').close(),
   'run-confirm': queueRun,
   'open-composer': () => openComposer(),
@@ -578,3 +584,12 @@ document.addEventListener('mouseup', e => {
 });
 
 queueMicrotask(boot);
+
+document.addEventListener('error', e => {
+  const img = e.target;
+  if (!img?.matches?.('.plan-img img')) return;
+  const note = document.createElement('div');
+  note.className = 'plan-img blocked';
+  note.textContent = `Image not found in the plan's folder: ${decodeURIComponent(img.getAttribute('src').replace('/plan-assets/', ''))}`;
+  img.closest('.plan-img').replaceWith(note);
+}, true);

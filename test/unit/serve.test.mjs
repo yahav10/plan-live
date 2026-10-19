@@ -1,6 +1,7 @@
 import { test, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, writeFileSync, unlinkSync } from 'node:fs';
+import { readFileSync, writeFileSync, unlinkSync, symlinkSync } from 'node:fs';
+import { join } from 'node:path';
 import http from 'node:http';
 import { createPlanServer } from '../../server/serve.mjs';
 import { parse } from '../../server/parse.mjs';
@@ -261,4 +262,65 @@ test('a run request goes through the real server and reaches the watcher as an e
   assert.match(r.data.text, new RegExp(`run on § ${task1.id}`));
   assert.match(r.data.text, /Execute this section: work through its unchecked steps in order/);
   assert.match(r.data.text, /context: lines \d+-\d+/);
+});
+
+const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==', 'base64');
+const rawGet = (srv, path, key = srv.key) => fetch(`http://127.0.0.1:${srv.port}${path}`, { headers: key ? { 'x-plan-live-key': key } : {} });
+
+test('plan assets: an image beside the plan is served with its type and nosniff', async () => {
+  const { dir } = await start();
+  writeFileSync(join(dir, 'pic.png'), PNG);
+  const r = await rawGet(srv, '/plan-assets/pic.png');
+  assert.equal(r.status, 200);
+  assert.equal(r.headers.get('content-type'), 'image/png');
+  assert.equal(r.headers.get('x-content-type-options'), 'nosniff');
+  assert.deepEqual(Buffer.from(await r.arrayBuffer()), PNG);
+  assert.equal((await rawGet(srv, '/plan-assets/pic.png', '')).status, 401, 'the session key is still required');
+  assert.equal((await rawGet(srv, '/plan-assets/missing.png')).status, 404);
+});
+
+test('plan assets: the plan, its review data and files outside the folder are never served', async () => {
+  const { dir, plan } = await start();
+  writeFileSync(join(dir, '..', 'secret.png'), 'SECRET');
+  symlinkSync(join(dir, '..', 'secret.png'), join(dir, 'link.png'));
+  for (const p of ['plan.md', 'plan.review.json', '..%2Fsecret.png', '%2e%2e/secret.png', 'link.png']) {
+    const r = await rawGet(srv, `/plan-assets/${p}`);
+    assert.notEqual(r.status, 200, p);
+    assert.ok(!(await r.text()).includes('SECRET'), p);
+  }
+  assert.ok(readFileSync(plan, 'utf8').length > 0);
+});
+
+test('plan assets: svg is served inside a sandbox that cannot run script', async () => {
+  const { dir } = await start();
+  writeFileSync(join(dir, 'd.svg'), '<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>');
+  const r = await rawGet(srv, '/plan-assets/d.svg');
+  assert.equal(r.headers.get('content-type'), 'image/svg+xml');
+  assert.match(r.headers.get('content-security-policy'), /^sandbox;.*default-src 'none'/);
+});
+
+test('embed route: serves the block code under a locked-down policy that only allows frames from the same origin', async () => {
+  const { dir, plan, api } = await start();
+  writeFileSync(plan, readFileSync(plan, 'utf8') + '\n## Motion\n```embed height=200\n<div id="out">hello</div><script>document.getElementById("out").textContent="ran"</script>\n```\n');
+  await sleep(250);
+  const model = (await api('GET', '/api/plan')).data.model;
+  const block = model.sections.flatMap(s => s.blocks).find(b => b.type === 'embed');
+  assert.ok(block, 'the embed block is in the model');
+  const r = await rawGet(srv, `/embed/${block.id}`);
+  assert.equal(r.status, 200);
+  const csp = r.headers.get('content-security-policy');
+  assert.match(csp, /sandbox allow-scripts/);
+  assert.match(csp, /connect-src 'none'/);
+  assert.match(csp, /default-src 'none'/);
+  assert.ok(!/allow-same-origin/.test(csp));
+  assert.equal(r.headers.get('x-frame-options'), 'SAMEORIGIN');
+  assert.match(csp, /frame-ancestors 'self'/);
+  assert.match(await r.text(), /<div id="out">hello<\/div><script>/);
+  assert.equal((await rawGet(srv, '/embed/000000000000')).status, 404);
+  assert.equal((await rawGet(srv, `/embed/${block.id}`, '')).status, 401);
+  const main = await rawGet(srv, '/');
+  assert.match(main.headers.get('content-security-policy'), /script-src 'self';/);
+  assert.match(main.headers.get('content-security-policy'), /frame-ancestors 'none'/);
+  assert.equal(main.headers.get('x-frame-options'), 'DENY');
+  assert.ok(dir);
 });

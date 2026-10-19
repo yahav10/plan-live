@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { splitLines, lineHash } from './diff.mjs';
 
 const TASK_HEADING = /^(?:Task\s+|T)(\d+)\b/i;
@@ -69,9 +70,13 @@ function parseArchitecture(body) {
   return { nodes: [...nodes.values()], edges: edges.map(e => (e[2] ? e : e.slice(0, 2))) };
 }
 
-function makeFence({ lang, line, body }) {
+function makeFence({ lang, line, body, info = '' }) {
   const code = body.join('\n');
   if (lang === 'mermaid') return { type: 'mermaid', line, code };
+  if (lang === 'embed') {
+    const h = Number(info.match(/\bheight=(\d{2,4})\b/)?.[1]);
+    return { type: 'embed', line, code, id: createHash('sha1').update(code).digest('hex').slice(0, 12), height: Math.min(900, Math.max(80, h || 320)) };
+  }
   try {
     if (lang === 'approaches') return { type: 'approaches', line, items: parseApproaches(body) };
     if (lang === 'architecture') return { type: 'architecture', line, ...parseArchitecture(body) };
@@ -113,7 +118,7 @@ function parseUnsafe(markdown) {
       continue;
     }
     const f = raw.match(/^\s*(`{3,}|~{3,})\s*([\w-]*)(.*)$/);
-    if (f && !(f[1][0] === '`' && f[3].includes('`'))) { endBlocks(); fence = { marker: f[1], lang: f[2].toLowerCase(), line: ln, body: [] }; continue; }
+    if (f && !(f[1][0] === '`' && f[3].includes('`'))) { endBlocks(); fence = { marker: f[1], lang: f[2].toLowerCase(), line: ln, body: [], info: f[3].trim() }; continue; }
 
     const h = raw.match(/^(#{1,6})\s+(.*?)\s*#*\s*$/);
     if (h) {
@@ -147,6 +152,9 @@ function parseUnsafe(markdown) {
         continue;
       }
     }
+
+    const im = raw.match(/^!\[([^\]]*)\]\(\s*([^)\s]+)(?:\s+"([^"]*)")?\s*\)\s*$/);
+    if (im) { endBlocks(); push({ type: 'image', alt: im[1], src: im[2], title: im[3] ?? '', line: ln }); continue; }
 
     const li = raw.match(/^(\s*)(?:[-*+]|\d+[.)])\s+(.*)$/);
     if (li) {

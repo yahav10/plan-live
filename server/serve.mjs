@@ -8,6 +8,8 @@ import { parse } from './parse.mjs';
 import { splitLines, joinLines, lineHash, diffLines, revertHunk } from './diff.mjs';
 import { createStore, linkHunks, StoreError } from './review-store.mjs';
 import { formatBatch, formatRejections } from './format.mjs';
+import { resolveAsset } from './assets.mjs';
+import { EMBED_CSP, embedPage, sanitizeTokens } from './embed.mjs';
 
 const UI_DIR = fileURLToPath(new URL('../ui/', import.meta.url));
 const CLI = fileURLToPath(new URL('../bin/plan-live.mjs', import.meta.url));
@@ -168,6 +170,29 @@ export async function createPlanServer({ planPath, port = 0, key = randomBytes(3
     }
   }
 
+  async function serveAsset(rel, res) {
+    let path;
+    try { path = decodeURIComponent(rel); } catch { return json(res, 400, { error: 'bad path' }); }
+    const a = await resolveAsset(dirname(planPath), path);
+    if (!a.ok) return json(res, a.code, { error: a.code === 404 ? 'not found' : 'not served' });
+    try {
+      const buf = await readFile(a.abs);
+      const headers = { 'content-type': a.type, 'cache-control': 'no-store', 'cross-origin-resource-policy': 'same-origin' };
+      if (a.sandbox) headers['content-security-policy'] = "sandbox; default-src 'none'; style-src 'unsafe-inline'; img-src data:";
+      res.writeHead(200, headers);
+      res.end(buf);
+    } catch {
+      json(res, 404, { error: 'not found' });
+    }
+  }
+
+  function serveEmbed(id, res, rawTokens) {
+    const block = [...model.preamble, ...model.sections.flatMap(s => s.blocks)].find(b => b.type === 'embed' && b.id === id);
+    if (!block) return json(res, 404, { error: 'not found' });
+    res.writeHead(200, { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store', 'content-security-policy': EMBED_CSP, 'x-frame-options': 'SAMEORIGIN', 'referrer-policy': 'no-referrer', 'x-content-type-options': 'nosniff' });
+    res.end(embedPage(block.code, sanitizeTokens(rawTokens)));
+  }
+
   const keyBuf = Buffer.from(key);
   const matches = v => { const b = Buffer.from(String(v ?? '')); return b.length === keyBuf.length && timingSafeEqual(b, keyBuf); };
   const cookieName = () => `plk_${server.address().port}`;
@@ -229,6 +254,8 @@ export async function createPlanServer({ planPath, port = 0, key = randomBytes(3
         const revisions = store.takeUnreported();
         return json(res, 200, { text: revisions.length ? formatRejections({ revisions, comments: store.state.comments, plan: planPath }) : '' });
       }
+      if (req.method === 'GET' && url.pathname.startsWith('/plan-assets/')) return serveAsset(url.pathname.slice('/plan-assets/'.length), res);
+      if (req.method === 'GET' && (m = url.pathname.match(/^\/embed\/([0-9a-f]{12})$/))) return serveEmbed(m[1], res, url.searchParams.get('tokens'));
       if (req.method === 'GET') return serveStatic(url.pathname, res);
       return json(res, 404, { error: 'not found' });
     } catch (e) {

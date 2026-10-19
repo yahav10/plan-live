@@ -131,6 +131,18 @@ dialog.confirm .warn { color: var(--warn); }
 dialog.confirm .hint { color: var(--muted); font-size: 13px; }
 dialog.confirm .actions { justify-content: flex-end; margin-top: 16px; }
 
+/* images and embeds */
+.plan-img { margin: 0; }
+.plan-img img { display: block; max-width: 100%; height: auto; border-radius: 12px; border: 1px solid var(--line); }
+.plan-img figcaption { margin-top: 6px; font-size: 12.5px; color: var(--muted); }
+.plan-img.blocked, .embed-static { padding: 14px 16px; border: 1px dashed var(--line-strong); border-radius: 12px; color: var(--muted); font-size: 13px; }
+.embed { border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; background: var(--card); }
+.embed-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 6px 12px; border-bottom: 1px solid var(--line); font: 600 11px var(--font-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.embed-tools { display: flex; gap: 12px; }
+.embed-stage { position: relative; height: var(--h, 320px); }
+.embed-frame { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; background: transparent; }
+.embed-play { position: absolute; inset: 0; margin: auto; width: max-content; height: max-content; padding: 10px 18px; }
+
 /* floating */
 .sel-comment { position: absolute; z-index: 20; padding: 6px 10px; border-radius: 8px; border: 1px solid var(--line-strong); background: color-mix(in srgb, var(--bg) 82%, transparent); backdrop-filter: blur(16px) saturate(170%); color: var(--ink); cursor: pointer; font-size: 12px; box-shadow: 0 8px 20px -8px rgba(0,0,0,.4); }
 .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 30; padding: 10px 16px; border-radius: 10px; background: var(--ink); color: var(--bg); font-size: 13px; }
@@ -298,7 +310,7 @@ button.pill:active, .tbtn:active, .ibtn:active, .jrow:active, .menu button:activ
 
 @page { margin: 14mm; }
 @media print {
-  .strip, .rail, .toast, .sel-comment, .xtools, .jump, .spine { display: none !important; }
+  .strip, .rail, .toast, .sel-comment, .xtools, .jump, .spine, .embed-tools { display: none !important; }
   body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   body::before, body::after { display: none !important; }
   .grid { display: block; }
