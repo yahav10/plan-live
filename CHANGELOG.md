@@ -2,7 +2,7 @@
 
 All notable changes to plan-live. Versions follow [semver](https://semver.org).
 
-## Unreleased
+## 0.7.0
 
 ### Added
 - The HTML export keeps embedded animations. Each one becomes a sandboxed, click-to-run frame with its own no-network policy. An export with an animation allows inline script in its page policy; an export without one stays script-free.
