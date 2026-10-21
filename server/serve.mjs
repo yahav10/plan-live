@@ -186,11 +186,11 @@ export async function createPlanServer({ planPath, port = 0, key = randomBytes(3
     }
   }
 
-  function serveEmbed(id, res, rawTokens) {
+  function serveEmbed(id, res, rawTokens, still) {
     const block = [...model.preamble, ...model.sections.flatMap(s => s.blocks)].find(b => b.type === 'embed' && b.id === id);
     if (!block) return json(res, 404, { error: 'not found' });
     res.writeHead(200, { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store', 'content-security-policy': EMBED_CSP, 'x-frame-options': 'SAMEORIGIN', 'referrer-policy': 'no-referrer', 'x-content-type-options': 'nosniff' });
-    res.end(embedPage(block.code, sanitizeTokens(rawTokens)));
+    res.end(embedPage(block.code, sanitizeTokens(rawTokens), { still }));
   }
 
   const keyBuf = Buffer.from(key);
@@ -255,7 +255,7 @@ export async function createPlanServer({ planPath, port = 0, key = randomBytes(3
         return json(res, 200, { text: revisions.length ? formatRejections({ revisions, comments: store.state.comments, plan: planPath }) : '' });
       }
       if (req.method === 'GET' && url.pathname.startsWith('/plan-assets/')) return serveAsset(url.pathname.slice('/plan-assets/'.length), res);
-      if (req.method === 'GET' && (m = url.pathname.match(/^\/embed\/([0-9a-f]{12})$/))) return serveEmbed(m[1], res, url.searchParams.get('tokens'));
+      if (req.method === 'GET' && (m = url.pathname.match(/^\/embed\/([0-9a-f]{12})$/))) return serveEmbed(m[1], res, url.searchParams.get('tokens'), url.searchParams.get('still') === '1');
       if (req.method === 'GET') return serveStatic(url.pathname, res);
       return json(res, 404, { error: 'not found' });
     } catch (e) {

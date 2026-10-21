@@ -1,4 +1,5 @@
 import { anchorLabel } from './components/review.mjs';
+import { embedTokens, embedSrc } from './components/media.mjs';
 
 export const exportName = (file, suffix, ext) => {
   const base = String(file || 'plan').replace(/\.md$/i, '').replace(/[^\w.-]+/g, '-').replace(/^-+|-+$/g, '') || 'plan';
@@ -128,12 +129,33 @@ export async function standaloneHtml(file) {
   const main = document.querySelector('main').cloneNode(true);
   main.querySelectorAll('.xtools, .pill.c, .chip.warn, .marker').forEach(n => n.remove());
   main.querySelectorAll('.pulse, .anchored, .flip, .landed, .enter').forEach(n => n.classList.remove('pulse', 'anchored', 'flip', 'landed', 'enter'));
-  main.querySelectorAll('.embed').forEach(n => { const note = document.createElement('div'); note.className = 'embed-static'; note.textContent = 'Embedded animation. It runs in plan-live only.'; n.replaceWith(note); });
+  let embeds = 0;
+  const tokens = embedTokens();
+  for (const host of main.querySelectorAll('.embed')) {
+    try {
+      const page = await (await fetch(embedSrc(host.dataset.embed, tokens))).text();
+      const wrap = document.createElement('div');
+      wrap.className = 'embed embed-export';
+      wrap.setAttribute('style', host.getAttribute('style') ?? '');
+      wrap.innerHTML = '<div class="embed-head"><span>Embedded animation · sandboxed</span></div><details><summary class="btn">▶ Click to run</summary><div class="embed-stage"><iframe class="embed-frame" sandbox="allow-scripts" loading="lazy" referrerpolicy="no-referrer" title="Embedded animation"></iframe></div></details>';
+      wrap.querySelector('iframe').setAttribute('data-doc', page);
+      host.replaceWith(wrap);
+      embeds++;
+    } catch {
+      const note = document.createElement('div');
+      note.className = 'embed-static';
+      note.textContent = 'Embedded animation. It could not be included in this export.';
+      host.replaceWith(note);
+    }
+  }
   for (const img of main.querySelectorAll('.plan-img img')) {
     try { img.setAttribute('src', await toDataUrl(img.getAttribute('src'))); } catch { img.closest('.plan-img').classList.add('blocked'); img.replaceWith(document.createTextNode('Image could not be included.')); }
   }
   main.querySelectorAll('[data-act]').forEach(n => n.removeAttribute('data-act'));
+  // A frame's code stays inert text in the file: no literal script tag outside the sandboxed frame.
+  const body = main.innerHTML.replace(/data-doc="([^"]*)"/g, (_, v) => `data-doc="${v.replace(/</g, '&lt;')}"`);
+  const opener = embeds ? `<script>document.addEventListener('toggle',function(e){var d=e.target,f=d.querySelector&&d.querySelector('iframe[data-doc]');if(d.open&&f&&!f.srcdoc)f.srcdoc=f.getAttribute('data-doc')},true)</script>\n` : '';
   const title = document.title || file;
   const extra = '.grid.export { display: block; max-width: 980px; } .export-foot { max-width: 980px; margin: 0 auto; padding: 0 34px 40px; font: 12px var(--font-mono); color: var(--muted); } main { padding-bottom: 20px; }';
-  return `<!doctype html>\n<html lang="en" data-theme="${theme}" data-mode="${mode}">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1">\n<meta name="generator" content="plan-live">\n<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; font-src data:; img-src data:">\n<title>${escHtml(title)}</title>\n<style>\n${fonts}\n${base}\n${themeCss}\n${extra}\n</style>\n</head>\n<body>\n<div class="grid export"><main>${main.innerHTML}</main></div>\n<footer class="export-foot">Exported from plan-live · ${new Date().toISOString().slice(0, 10)} · ${escHtml(file)}</footer>\n</body>\n</html>\n`;
+  return `<!doctype html>\n<html lang="en" data-theme="${theme}" data-mode="${mode}">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1">\n<meta name="generator" content="plan-live">\n<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; font-src data:; img-src data:${embeds ? "; script-src 'unsafe-inline'" : ''}">\n<title>${escHtml(title)}</title>\n<style>\n${fonts}\n${base}\n${themeCss}\n${extra}\n</style>\n</head>\n<body>\n<div class="grid export"><main>${body}</main></div>\n${opener}<footer class="export-foot">Exported from plan-live · ${new Date().toISOString().slice(0, 10)} · ${escHtml(file)}</footer>\n</body>\n</html>\n`;
 }

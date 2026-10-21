@@ -1,6 +1,6 @@
 import { esc } from '../lib.mjs';
 
-export const embedSrc = (id, tokens) => `/embed/${encodeURIComponent(id)}?tokens=${encodeURIComponent(JSON.stringify(tokens))}`;
+export const embedSrc = (id, tokens, { still = false } = {}) => `/embed/${encodeURIComponent(id)}?tokens=${encodeURIComponent(JSON.stringify(tokens))}${still ? '&still=1' : ''}`;
 
 export function assetUrl(src) {
   if (/^[a-z][a-z0-9+.-]*:/i.test(src) || src.startsWith('//')) return null;
@@ -52,4 +52,38 @@ export function stopEmbed(host) {
   play.textContent = '▶ Click to run';
   host.querySelector('.embed-stage').replaceChildren(play);
   setTools(host, false);
+}
+
+const stillLoaded = frame => new Promise(ok => { frame.addEventListener('load', ok, { once: true }); setTimeout(ok, 2000); });
+
+// Light tokens: printing always switches the page to light, but the frames are built before that happens.
+function lightTokens() {
+  const root = document.documentElement, was = root.dataset.mode;
+  root.dataset.mode = 'light';
+  const tokens = embedTokens();
+  root.dataset.mode = was;
+  return tokens;
+}
+
+export async function stillEmbeds(root = document) {
+  const tokens = lightTokens(), loads = [];
+  for (const host of root.querySelectorAll('.embed')) {
+    const frame = document.createElement('iframe');
+    frame.className = 'embed-frame';
+    frame.setAttribute('sandbox', 'allow-scripts');
+    frame.setAttribute('referrerpolicy', 'no-referrer');
+    frame.title = 'Embedded animation (still)';
+    frame.src = embedSrc(host.dataset.embed, tokens, { still: true });
+    loads.push(stillLoaded(frame));
+    host.querySelector('.embed-stage').replaceChildren(frame);
+    host.classList.add('is-still');
+  }
+  await Promise.all(loads);
+}
+
+export function restoreEmbeds(running, root = document) {
+  for (const host of root.querySelectorAll('.embed.is-still')) {
+    host.classList.remove('is-still');
+    if (running.has(host.dataset.embed)) playEmbed(host); else stopEmbed(host);
+  }
 }

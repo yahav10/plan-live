@@ -188,7 +188,15 @@ For a small animation, use an `embed` block with HTML, CSS and JavaScript in it 
 ```
 ````
 
-An embed is click to run. It runs in a sandboxed frame with no access to the page, your cookies, the review API or the network, so a plan from someone else's repo cannot do anything with it. It receives the theme's colours as CSS variables (`--accent`, `--ink`, `--muted`, `--bg` and a few more), so it matches the current theme. HTML exports and PDFs replace it with a note, and an image in an export is embedded in the file. Try `docs/examples/media-plan.md`.
+An embed is click to run. It runs in a sandboxed frame with no access to the page, your cookies, the review API or the network, so a plan from someone else's repo cannot do anything with it. It receives the theme's colours as CSS variables (`--accent`, `--ink`, `--muted`, `--bg` and a few more), so it matches the current theme. Try `docs/examples/media-plan.md`.
+
+**In exports.** The HTML export embeds each image in the file and keeps each animation as a click-to-run frame with the same isolation as the live page (a sandboxed frame with its own no-network policy), so one exported file shares the whole plan. To allow that, an export that contains an animation allows inline script in its page policy; an export without one stays fully script-free. The PDF export swaps each animation for a **still frame**, drawn in light colours.
+
+**Make your animation print well.** The still frame is your embed with `<html data-still="true">`, all CSS animations and transitions switched off, and a normal page otherwise. So draw the finished diagram as the resting state and animate on top of it. If you drive things from JavaScript, check `document.documentElement.dataset.still` and render the end state without timers. Anything that is hidden until an animation reveals it (a caption at `opacity: 0`, for example) needs a `html[data-still]` rule that shows it.
+
+**Screenshots in a plan.** Images come from the plan's folder, so a script can keep them fresh: have a Playwright spec write `shots/*.png` next to the plan and refer to them with `![Saved form](shots/form-saved.png)`. Re-run the spec and the page shows the new pictures.
+
+**Writing SVG in an embed.** Monospace text runs wider than you expect. Use the body font for small labels, or measure the text before you size the box around it.
 
 <img src="docs/screenshots/media.png" alt="An image from the plan's folder and a running embedded animation, in the Fluid theme" width="860">
 

@@ -324,3 +324,14 @@ test('embed route: serves the block code under a locked-down policy that only al
   assert.equal(main.headers.get('x-frame-options'), 'DENY');
   assert.ok(dir);
 });
+
+test('embed route: ?still=1 serves the still version of the page', async () => {
+  const { plan, api } = await start();
+  writeFileSync(plan, readFileSync(plan, 'utf8') + '\n## Motion\n```embed\n<i id="d"></i>\n```\n');
+  await sleep(250);
+  const block = (await api('GET', '/api/plan')).data.model.sections.flatMap(s => s.blocks).find(b => b.type === 'embed');
+  const live = await (await rawGet(srv, `/embed/${block.id}`)).text();
+  const still = await (await rawGet(srv, `/embed/${block.id}?still=1`)).text();
+  assert.ok(!live.includes('data-still'));
+  assert.match(still, /<html data-still="true">/);
+});

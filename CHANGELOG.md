@@ -2,6 +2,13 @@
 
 All notable changes to plan-live. Versions follow [semver](https://semver.org).
 
+## Unreleased
+
+### Added
+- The HTML export keeps embedded animations. Each one becomes a sandboxed, click-to-run frame with its own no-network policy. An export with an animation allows inline script in its page policy; an export without one stays script-free.
+- The PDF export shows each animation as a still frame in light colours. The frame has `<html data-still="true">` and no CSS animation or transition, so an embed that draws its finished state at rest prints well. Running animations go back to running after the print.
+- Every embed page carries its own strict policy as well as the one the server sends.
+
 ## 0.6.1
 
 ### Fixed

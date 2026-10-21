@@ -9,7 +9,7 @@ import { attachPanZoom } from './components/dag.mjs';
 import { renderRail, anchorLabel } from './components/review.mjs';
 import { filterSections, renderJumpRows, renderSpine, renderPill } from './components/jump.mjs';
 import { runnable, blockedBy } from './components/run.mjs';
-import { playEmbed, stopEmbed, pushEmbedTokens } from './components/media.mjs';
+import { playEmbed, stopEmbed, pushEmbedTokens, stillEmbeds, restoreEmbeds } from './components/media.mjs';
 import { exportName, toCsv, reviewMarkdown, download, diagramSvg, svgToPng, standaloneHtml } from './export.mjs';
 
 const calm = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -343,7 +343,7 @@ async function exportDiagram(btn) {
 async function runExport(fmt) {
   const file = fileName(), plan = state.plan, review = state.review;
   try {
-    if (fmt === 'pdf') { print(); return; }
+    if (fmt === 'pdf') { await stillEmbeds(); print(); return; }
     if (fmt === 'copy-md' || fmt === 'md') {
       const { text } = await api('GET', '/api/source');
       if (fmt === 'copy-md') { await navigator.clipboard.writeText(text); toast('Copied Markdown to the clipboard'); return; }
@@ -372,6 +372,7 @@ addEventListener('beforeprint', () => {
   document.documentElement.dataset.mode = 'light';
 });
 addEventListener('afterprint', () => {
+  restoreEmbeds(state.embeds);
   if (beforePrintMode) document.documentElement.dataset.mode = beforePrintMode;
   beforePrintMode = null;
 });
