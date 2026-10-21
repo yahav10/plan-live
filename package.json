@@ -1,6 +1,6 @@
 {
   "name": "plan-live",
-  "version": "0.8.0",
+  "version": "0.9.0",
   "private": true,
   "type": "module",
   "description": "Live, themeable, two-way HTML view of markdown plans for Claude Code.",

@@ -2,7 +2,7 @@
 
 All notable changes to plan-live. Versions follow [semver](https://semver.org).
 
-## Unreleased
+## 0.9.0
 
 ### Added
 - Overview header. A progress bar with the step count, four tiles (Done, In progress, Blocked, To do) that list their task numbers and jump to the first task of that kind, and a Now bar with a Focus button. It replaces the progress ring in every theme.
