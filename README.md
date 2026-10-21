@@ -169,6 +169,21 @@ Task sections with unfinished steps get a **Run** button. Click it, read the con
 
 Runs travel the same loop as comments, so the watcher must be running (the confirm tells you if it is not), and Claude Code still asks permission before running anything that needs it. Only plan edits come back as diffs to accept or reject; code Claude writes elsewhere is not shown on the page.
 
+## Callouts, dependencies and shortcuts
+
+**Callouts.** A GitHub-style alert becomes a coloured box in the page:
+
+```
+> [!WARNING] Careful
+> Never run this on prod.
+```
+
+The kinds are `NOTE`, `TIP`, `IMPORTANT`, `WARNING` and `CAUTION`. Text after the kind replaces the label. The same file still reads fine on GitHub.
+
+**Dependencies.** Write them in sentences, and lists work: `Depends on Task 5, Task 6 and Task 7`, `Depends on Task 1, 2 or 3`, `After T1 & T2`. The graph draws an arrowhead for each one, reorders boxes to cut crossings, runs a long edge above the boxes it skips, wraps long titles onto two lines, and shows a progress bar in each task box. A wide graph scrolls inside its card so the text stays readable.
+
+**Shortcuts.** Press `?` or click the question-mark button to see them all. The hints show `⌘` on a Mac and `Ctrl` elsewhere.
+
 ## Images and animation
 
 Put an image on its own line and it shows up in the page:

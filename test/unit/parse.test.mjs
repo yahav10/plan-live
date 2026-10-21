@@ -156,3 +156,45 @@ test('other html fences stay plain code', () => {
   const m = parse('## A\n```html\n<script>alert(1)</script>\n```\n');
   assert.equal(m.sections[0].blocks[0].type, 'code');
 });
+
+const edgesFor = line => {
+  const md = '### Task 1: A\n- [ ] a\n### Task 2: B\n- [ ] b\n### Task 3: C\n- [ ] c\n### Task 4: D\n- [ ] d\n### Task 5: E\n- [ ] e\n### Task 9: Z\n' + line + '\n- [ ] z\n';
+  return parse(md).graph.edges.filter(e => e[1] === 'T9').map(e => e[0]).sort();
+};
+
+test('a dependency list links every task it names, in any common phrasing', () => {
+  assert.deepEqual(edgesFor('Depends on Task 1, Task 2 and Task 3.'), ['T1', 'T2', 'T3']);
+  assert.deepEqual(edgesFor('Depends on Task 1, 2 and 3.'), ['T1', 'T2', 'T3']);
+  assert.deepEqual(edgesFor('Depends on T1 & T2.'), ['T1', 'T2']);
+  assert.deepEqual(edgesFor('Blocked by Task 3, 4 or 5.'), ['T3', 'T4', 'T5']);
+  assert.deepEqual(edgesFor('after T1, T2, and T4'), ['T1', 'T2', 'T4']);
+  assert.deepEqual(edgesFor('Depends on Task 1 / Task 2.'), ['T1', 'T2']);
+});
+
+test('single dependencies, several triggers and look-alike phrases still behave', () => {
+  assert.deepEqual(edgesFor('Depends on Task 1.'), ['T1']);
+  assert.deepEqual(edgesFor('After T2 and blocked by T1.'), ['T1', 'T2']);
+  assert.deepEqual(edgesFor('Runs after 2 days of soak.'), []);
+  assert.deepEqual(edgesFor('Depends on Task 1 and 3 days of soak.'), ['T1']);
+  assert.deepEqual(edgesFor('Depends on Task 1 and the vault.'), ['T1']);
+  assert.deepEqual(edgesFor('Depends on Task 99.'), [], 'an unknown task adds no edge');
+});
+
+test('a GitHub-style alert becomes a callout block with its kind, title and paragraphs', () => {
+  const m = parse('## A\n> [!WARNING]\n> Do not run this on prod.\n> Second line.\n>\n> New paragraph.\n\nAfter.\n\n> [!tip] Custom title\n> Short.\n');
+  const [a, p, b] = m.sections[0].blocks;
+  assert.deepEqual(a, { type: 'callout', kind: 'warning', title: '', paras: ['Do not run this on prod. Second line.', 'New paragraph.'], line: 2 });
+  assert.equal(p.type, 'paragraph');
+  assert.deepEqual([b.kind, b.title, b.paras], ['tip', 'Custom title', ['Short.']]);
+});
+
+test('only the five known alert kinds are callouts, and never inside code', () => {
+  const m = parse('## A\n> [!FOO]\n> nope\n\n```md\n> [!NOTE]\n> still code\n```\n');
+  assert.deepEqual(m.sections[0].blocks.map(b => b.type), ['paragraph', 'code']);
+  for (const k of ['NOTE', 'TIP', 'IMPORTANT', 'WARNING', 'CAUTION']) assert.equal(parse(`## A\n> [!${k}]\n> x\n`).sections[0].blocks[0].kind, k.toLowerCase());
+});
+
+test('an alert ends at the first line that is not part of the quote', () => {
+  const m = parse('## A\n> [!NOTE]\n> inside\nplain line right after\n');
+  assert.deepEqual(m.sections[0].blocks.map(b => b.type), ['callout', 'paragraph']);
+});

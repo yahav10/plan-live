@@ -21,13 +21,13 @@ export function filterSections(sections, query) {
 const count = s => (s.progress.total ? `${s.progress.done}/${s.progress.total}` : '');
 const isDone = s => s.progress.total > 0 && s.progress.done === s.progress.total;
 
-export function renderPill({ sections, active, progress = 0, open = false }) {
+export function renderPill({ sections, active, progress = 0, open = false, mod = 'Ctrl' }) {
   const i = sections.findIndex(s => s.id === active);
   const s = sections[i];
   const parsed = s ? parseHeading(s.heading, i) : null;
   const label = parsed ? `${parsed.label} · ${parsed.title}` : 'Sections';
   const aria = parsed ? `Jump to section. Now in ${parsed.label}. ${parsed.title}` : 'Jump to section';
-  return `<button class="pill" data-act="jump-toggle" aria-haspopup="dialog" aria-expanded="${open}" aria-label="${esc(aria)}" style="--scroll:${Math.min(1, Math.max(0, progress)).toFixed(3)}"><svg class="arc" viewBox="0 0 20 20" aria-hidden="true"><circle class="bg" cx="10" cy="10" r="7.5"/><circle class="fg" cx="10" cy="10" r="7.5" transform="rotate(-90 10 10)"/></svg><span class="ptxt">${esc(label)}</span>${s && count(s) ? `<small>${count(s)}</small>` : ''}<span class="kbd">Ctrl K</span></button>`;
+  return `<button class="pill" data-act="jump-toggle" aria-haspopup="dialog" aria-expanded="${open}" aria-label="${esc(aria)}" style="--scroll:${Math.min(1, Math.max(0, progress)).toFixed(3)}"><svg class="arc" viewBox="0 0 20 20" aria-hidden="true"><circle class="bg" cx="10" cy="10" r="7.5"/><circle class="fg" cx="10" cy="10" r="7.5" transform="rotate(-90 10 10)"/></svg><span class="ptxt">${esc(label)}</span>${s && count(s) ? `<small>${count(s)}</small>` : ''}<span class="kbd">${esc(mod)} K</span></button>`;
 }
 
 export function renderJumpRows({ sections, active, matches, act }) {

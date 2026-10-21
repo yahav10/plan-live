@@ -1,8 +1,23 @@
 import { esc } from '../lib.mjs';
 import { resist, releaseVelocity, decayed } from './momentum.mjs';
 
-const W = 180, H = 56, GX = 70, GY = 22, PAD = 32;
+const W = 180, H = 66, GX = 70, GY = 22, PAD = 32, CHAR = 6.6, LINE = 21, BAR_W = 118;
 const trunc = (s, n) => (s.length > n ? s.slice(0, n - 1) + '…' : s);
+
+// Greedy word wrap onto at most two lines; only the second line is ever shortened.
+export function wrapTitle(title, n = LINE) {
+  const words = String(title).split(/\s+/).filter(Boolean), lines = [''];
+  for (let w of words) {
+    while (w.length > n) { if (lines.at(-1)) lines.push(''); lines[lines.length - 1] = w.slice(0, n); w = w.slice(n); if (lines.length >= 2 && w) { lines[1] = trunc(lines[1] + w, n); w = ''; } }
+    if (!w) continue;
+    const cur = lines.at(-1);
+    if (!cur) lines[lines.length - 1] = w;
+    else if ((cur + ' ' + w).length <= n) lines[lines.length - 1] = cur + ' ' + w;
+    else if (lines.length < 2) lines.push(w);
+    else lines[1] = trunc(cur + ' ' + w, n);
+  }
+  return lines.filter(Boolean).length ? lines.filter(Boolean) : [''];
+}
 
 export function layout(nodes, edges) {
   const depth = new Map(nodes.map(n => [n.key, 0]));
@@ -17,12 +32,34 @@ export function layout(nodes, edges) {
   }
   const cols = [];
   for (const n of nodes) (cols[depth.get(n.key)] ??= []).push(n);
-  const pos = new Map();
   const dense = cols.filter(Boolean);
-  dense.forEach((col, c) => col.forEach((n, r) => pos.set(n.key, { x: c * (W + GX), y: r * (H + GY), w: W, h: H })));
-  const width = Math.max(1, dense.length) * (W + GX) - GX;
+  const colOf = new Map(dense.flatMap((col, c) => col.map(n => [n.key, c])));
+  const rows = new Map(dense.flatMap(col => col.map((n, r) => [n.key, r])));
+  const preds = new Map(nodes.map(n => [n.key, []])), succs = new Map(nodes.map(n => [n.key, []]));
+  for (const [a, b] of edges) if (a !== b && colOf.has(a) && colOf.has(b)) { preds.get(b).push(a); succs.get(a).push(b); }
+  const bary = (n, nb) => { const ns = nb.get(n.key); return ns.length ? ns.reduce((t, k) => t + rows.get(k), 0) / ns.length : rows.get(n.key); };
+  const order = (col, nb) => {
+    col.map((n, i) => ({ n, b: bary(n, nb), i })).sort((p, q) => p.b - q.b || p.i - q.i).forEach(({ n }, r) => { rows.set(n.key, r); });
+    col.sort((p, q) => rows.get(p.key) - rows.get(q.key));
+  };
+  for (let sweep = 0; sweep < 4; sweep++) {
+    for (let c = 1; c < dense.length; c++) order(dense[c], preds);
+    for (let c = dense.length - 2; c >= 0; c--) order(dense[c], succs);
+  }
+  const need = dense.map(() => GX);
+  for (const [a, b, label] of edges) {
+    if (a === b || !label || !colOf.has(a) || !colOf.has(b) || colOf.get(b) - colOf.get(a) !== 1) continue;
+    need[colOf.get(a)] = Math.max(need[colOf.get(a)], Math.ceil(String(label).length * CHAR + 26));
+  }
+  const xs = []; let x = 0;
+  dense.forEach((_, c) => { xs.push(x); x += W + need[c]; });
+  const pos = new Map();
+  dense.forEach((col, c) => col.forEach((n, r) => pos.set(n.key, { x: xs[c], y: r * (H + GY), w: W, h: H })));
+  const lanes = new Map();
+  edges.forEach(([a, b], i) => { if (a !== b && colOf.has(a) && colOf.has(b) && colOf.get(b) - colOf.get(a) > 1) lanes.set(i, lanes.size); });
+  const width = Math.max(W, x - (need.at(-1) ?? GX));
   const height = Math.max(1, ...dense.map(c => c.length)) * (H + GY) - GY;
-  return { pos, width, height };
+  return { pos, width, height, lanes, top: lanes.size ? 12 + lanes.size * 10 : 0 };
 }
 
 const stateOf = (n, active) => {
@@ -32,24 +69,45 @@ const stateOf = (n, active) => {
 };
 
 export function renderDag(nodes, edges, { active, zoomable = false } = {}) {
-  const { pos, width, height } = layout(nodes, edges);
-  const edge = ([a, b, label]) => {
+  const { pos, width, height, lanes, top } = layout(nodes, edges);
+  const edge = ([a, b, label], i) => {
     const s = pos.get(a), t = pos.get(b);
     if (a === b || !s || !t) return '';
-    const x1 = s.x + s.w, y1 = s.y + s.h / 2, x2 = t.x, y2 = t.y + t.h / 2, mx = (x1 + x2) / 2;
-    const path = `<path class="edge${b === active ? ' flow' : ''}"${b === active ? '' : ' pathLength="1"'} data-from="${esc(a)}" data-to="${esc(b)}" d="M${x1} ${y1} C${mx} ${y1} ${mx} ${y2} ${x2} ${y2}"/>`;
-    return label ? `${path}<text class="elabel" x="${mx}" y="${(y1 + y2) / 2 - 6}" text-anchor="middle">${esc(label)}</text>` : path;
+    const x1 = s.x + s.w, y1 = s.y + s.h / 2, x2 = t.x - 1, y2 = t.y + t.h / 2, mx = (x1 + x2) / 2;
+    const flow = b === active ? ' flow' : '';
+    const ids = `data-from="${esc(a)}" data-to="${esc(b)}"`;
+    const lane = lanes.get(i);
+    let d, lx, ly;
+    if (lane === undefined) {
+      d = `M${x1} ${y1} C${mx} ${y1} ${mx} ${y2} ${x2} ${y2}`;
+      lx = mx; ly = (y1 + y2) / 2 - 6;
+    } else {
+      const yl = -(10 + lane * 10);
+      d = `M${x1} ${y1} C${x1 + 28} ${y1} ${x1 + 28} ${yl} ${x1 + 56} ${yl} L${x2 - 56} ${yl} C${x2 - 28} ${yl} ${x2 - 28} ${y2} ${x2} ${y2}`;
+      lx = mx; ly = yl - 5;
+    }
+    const path = `<path class="edge${flow}"${flow ? '' : ' pathLength="1"'} ${ids} d="${d}"/>`
+      + `<path class="head${flow}" ${ids} d="M${x2 - 9} ${y2 - 5} L${x2} ${y2} L${x2 - 9} ${y2 + 5} Z"/>`;
+    return label ? `${path}<text class="elabel" x="${lx}" y="${ly}" text-anchor="middle">${esc(label)}</text>` : path;
   };
   const node = n => {
     const p = pos.get(n.key);
     const title = n.sectionId ? `${n.key} · ${n.label.replace(/^(?:Task\s+|T)\d+\s*[:.—-]?\s*/i, '')}` : n.label;
-    const sub = n.progress ? (n.progress.total ? `${n.progress.done}/${n.progress.total}` : '') : '';
+    const lines = wrapTitle(title);
+    const prog = n.progress?.total ? n.progress : null;
+    const base = prog ? (lines.length === 2 ? 22 : 27) : (lines.length === 2 ? H / 2 - 4 : H / 2 + 5);
+    const text = lines.map((l, i) => `<text class="t" x="${p.x + 14}" y="${p.y + base + i * 16}">${esc(l)}</text>`).join('');
+    const bar = prog
+      ? `<rect class="bar-bg" x="${p.x + 14}" y="${p.y + H - 18}" width="${BAR_W}" height="4" rx="2"/>`
+        + `<rect class="bar${prog.done === prog.total ? ' ok' : ''}" x="${p.x + 14}" y="${p.y + H - 18}" width="${+(BAR_W * prog.done / prog.total).toFixed(2)}" height="4" rx="2"/>`
+        + `<text class="m" x="${p.x + W - 14}" y="${p.y + H - 13}" text-anchor="end">${prog.done}/${prog.total}</text>`
+      : '';
     return `<g class="node ${stateOf(n, active)}" data-node="${esc(n.key)}"${n.sectionId ? ` data-goto="${esc(n.sectionId)}"` : ''}>`
-      + `<rect x="${p.x}" y="${p.y}" width="${p.w}" height="${p.h}" rx="10"/>`
-      + `<text x="${p.x + 14}" y="${p.y + (sub ? 24 : 33)}">${esc(trunc(title, 24))}</text>`
-      + `${sub ? `<text class="m" x="${p.x + 14}" y="${p.y + 42}">${esc(sub)}</text>` : ''}<title>${esc(n.label)}</title></g>`;
+      + `<rect x="${p.x}" y="${p.y}" width="${p.w}" height="${p.h}" rx="10"/>${text}${bar}<title>${esc(n.label)}</title></g>`;
   };
-  return `<svg class="dag${zoomable ? ' zoomable' : ''}" viewBox="${-PAD} ${-PAD} ${width + 2 * PAD} ${height + 2 * PAD}" role="img">`
+  const vw = width + 2 * PAD, vh = height + 2 * PAD + top;
+  const style = zoomable ? '' : ` style="min-width:${Math.round(vw * 0.85)}px"`;
+  return `<svg class="dag${zoomable ? ' zoomable' : ''}" viewBox="${-PAD} ${-PAD - top} ${vw} ${vh}" role="img"${style}>`
     + `${edges.map(edge).join('')}${nodes.map(node).join('')}</svg>`;
 }
 
@@ -121,6 +179,6 @@ export function attachPanZoom(svg) {
   svg.addEventListener('click', e => {
     const key = e.target.closest('[data-node]')?.dataset.node;
     svg.classList.toggle('focus', !!key);
-    svg.querySelectorAll('.edge').forEach(p => p.classList.toggle('hl', !!key && (p.dataset.from === key || p.dataset.to === key)));
+    svg.querySelectorAll('.edge, .head').forEach(p => p.classList.toggle('hl', !!key && (p.dataset.from === key || p.dataset.to === key)));
   });
 }

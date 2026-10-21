@@ -1,4 +1,5 @@
-import { api, toast, esc } from './lib.mjs';
+import { api, toast, esc, modLabel } from './lib.mjs';
+import { renderKeys } from './components/keys.mjs';
 import { resolveChoice, applyTheme, nextMode, nextTheme, remember, recall } from './theme.mjs';
 import { renderStrip, fmtAge } from './components/strip.mjs';
 import { renderHero } from './components/hero.mjs';
@@ -99,7 +100,7 @@ function trackActive() {
 function refreshPill() {
   const pill = document.querySelector('.pill');
   if (!pill || !state.plan) return;
-  pill.outerHTML = renderPill({ sections: state.plan.model.sections, active: state.active, open: state.jump.open });
+  pill.outerHTML = renderPill({ sections: state.plan.model.sections, active: state.active, open: state.jump.open, mod: modLabel() });
   paintScroll();
 }
 
@@ -506,6 +507,13 @@ async function applyBatch() {
   }
 }
 
+function openKeys() {
+  const dlg = $('keys');
+  if (dlg.open) return;
+  dlg.innerHTML = renderKeys(modLabel());
+  dlg.showModal();
+}
+
 async function openRunConfirm(sectionId) {
   const { model } = state.plan, dlg = $('confirm');
   const sec = model.sections.find(s => s.id === sectionId);
@@ -540,6 +548,8 @@ const revisionAction = action => async el => {
 Object.assign(actions, {
   apply: applyBatch,
   run: el => openRunConfirm(el.dataset.sec),
+  keys: openKeys,
+  'keys-close': () => $('keys').close(),
   'embed-play': el => { const host = el.closest('.embed'); state.embeds.add(host.dataset.embed); playEmbed(host); },
   'embed-stop': el => { const host = el.closest('.embed'); state.embeds.delete(host.dataset.embed); stopEmbed(host); },
   'embed-replay': el => playEmbed(el.closest('.embed')),
@@ -553,7 +563,8 @@ Object.assign(actions, {
   accept: revisionAction('accept'),
   reject: revisionAction('reject'),
 });
-Object.assign(keymap, { c: () => openComposer(), enter: applyBatch });
+Object.assign(keymap, { c: () => openComposer(), enter: applyBatch, '?': openKeys });
+$('keys').addEventListener('click', e => { if (e.target === e.currentTarget) e.currentTarget.close(); });
 
 $('composer').addEventListener('submit', e => { e.preventDefault(); saveComment(); });
 $('composer-body').addEventListener('keydown', e => {

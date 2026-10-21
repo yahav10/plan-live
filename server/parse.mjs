@@ -2,7 +2,9 @@ import { createHash } from 'node:crypto';
 import { splitLines, lineHash } from './diff.mjs';
 
 const TASK_HEADING = /^(?:Task\s+|T)(\d+)\b/i;
-const REF = /\b(?:depends\s+on|after|blocked\s+(?:on|by))\s+(?:Task\s*|T)(\d+)/gi;
+const ITEM = '(?:Task\\s*|T)\\d+';
+const MORE = '\\s*(?:,|&|\\/|\\band\\b|\\bor\\b)(?:\\s*(?:and|or)\\b)?\\s*(?:(?:Task\\s*|T)?\\d+(?!\\d|\\s*(?:days?|hours?|weeks?|minutes?|mins?|steps?|items?|%)\\b))';
+const REF = new RegExp('\\b(?:depends\\s+on|after|blocked\\s+(?:on|by))\\s+(' + ITEM + '(?:' + MORE + ')*)', 'gi');
 const STOP = new Set(['the', 'a', 'an', 'and', 'of', 'in', 'to', 'for', 'on', 'what', 'how', 'one', 'is', 'are',
   'does', 'do', 'before', 'we', 'you', 'your', 'this', 'that', 'it', 'with', 'read']);
 const EFFORT = new Set(['S', 'M', 'L']);
@@ -103,8 +105,8 @@ function parseUnsafe(markdown) {
     used.set(base, n);
     return n === 1 ? base : `${base}-${n}`;
   };
-  let section = null, fence = null, para = null, list = null, table = null;
-  const endBlocks = () => { para = list = table = null; };
+  let section = null, fence = null, para = null, list = null, table = null, callout = null, gap = false;
+  const endBlocks = () => { para = list = table = callout = null; };
   const push = b => (section ? section.blocks : model.preamble).push(b);
 
   for (let i = 0; i < lines.length; i++) {
@@ -140,6 +142,20 @@ function parseUnsafe(markdown) {
     const short = raw.match(/^<!--\s*short:\s*(.+?)\s*-->\s*$/);
     if (short && section) { section.short = short[1]; continue; }
     if (/^\s*$/.test(raw) || /^\s{0,3}([-*_])(\s*\1){2,}\s*$/.test(raw)) { endBlocks(); continue; }
+
+    const ca = raw.match(/^>\s?\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\][ \t]*(.*)$/i);
+    if (ca) { endBlocks(); callout = { type: 'callout', kind: ca[1].toLowerCase(), title: ca[2].trim(), paras: [], line: ln }; gap = false; push(callout); continue; }
+    if (callout) {
+      const q = raw.match(/^>\s?(.*)$/);
+      if (q) {
+        const t = q[1].trim();
+        if (!t) gap = true;
+        else if (gap || !callout.paras.length) { callout.paras.push(t); gap = false; }
+        else callout.paras[callout.paras.length - 1] += ' ' + t;
+        continue;
+      }
+      callout = null;
+    }
 
     if (/^\s*\|/.test(raw)) {
       if (table) { table.rows.push(cells(raw)); continue; }
@@ -191,9 +207,11 @@ function parseUnsafe(markdown) {
   for (const s of model.sections) {
     if (!s.node) continue;
     for (const m of sectionText(s).matchAll(REF)) {
-      const from = 'T' + m[1];
-      if (keys.has(from) && from !== s.node.key && !model.graph.edges.some(e => e[0] === from && e[1] === s.node.key)) {
-        model.graph.edges.push([from, s.node.key]);
+      for (const n of m[1].match(/\d+/g)) {
+        const from = 'T' + n;
+        if (keys.has(from) && from !== s.node.key && !model.graph.edges.some(e => e[0] === from && e[1] === s.node.key)) {
+          model.graph.edges.push([from, s.node.key]);
+        }
       }
     }
   }

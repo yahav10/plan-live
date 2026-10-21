@@ -12,6 +12,9 @@ export function inline(md) {
   return s.replace(/\u0000(\d+)\u0000/g, (_, i) => `<code>${codes[i]}</code>`);
 }
 
+export const modLabel = (platform = globalThis.navigator?.userAgentData?.platform || globalThis.navigator?.platform || '') =>
+  (/mac|darwin|iphone|ipad/i.test(platform) ? '⌘' : 'Ctrl');
+
 export function hashStr(s) {
   let h = 5381;
   for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0;

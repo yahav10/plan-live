@@ -2,6 +2,18 @@
 
 All notable changes to plan-live. Versions follow [semver](https://semver.org).
 
+## Unreleased
+
+### Added
+- Callouts. `> [!NOTE]`, `TIP`, `IMPORTANT`, `WARNING` and `CAUTION` alerts render as coloured boxes, with an optional custom title.
+- A shortcut list. Press `?` or use the question-mark button in the top bar. Key hints show `⌘` on Apple platforms and `Ctrl` elsewhere.
+
+### Changed
+- The dependency graph is easier to read: arrowheads on every edge, boxes reordered to reduce crossings, edges that skip a column run above the boxes instead of behind them, long titles wrap onto two lines, each task box has a progress bar, and wide graphs scroll inside the card instead of shrinking the text. Edge labels get a column gap wide enough to hold them.
+
+### Fixed
+- A dependency list now links every task it names. `Depends on Task 5, Task 6 and Task 7` used to link only Task 5. Lists such as `Task 5, 6 and 7`, `T1 & T2` and `Task 3, 4 or 5` work too.
+
 ## 0.7.0
 
 ### Added

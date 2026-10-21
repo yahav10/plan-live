@@ -170,3 +170,25 @@ test('PDF export puts a running embed back to running afterwards', async ({ page
   await expect(page.locator('iframe.embed-frame')).toHaveAttribute('src', /^(?!.*still=1)/);
   await expect(page.locator('.embed-tools button').first()).toBeVisible();
 });
+
+test('callouts render with their kind and label, and hostile text in them stays inert', async ({ page, plan }) => {
+  plan.write(plan.read() + '\n## Notices\n> [!NOTE]\n> A **plain** note.\n\n> [!WARNING] Careful\n> Never run `rm -rf` here.\n\n> [!CAUTION]\n> <img src=x onerror="window.__pwned=1"> and <script>window.__pwned=2</script>\n');
+  await page.goto(plan.url);
+  await expect(page.locator('.callout-note .callout-title')).toHaveText('Note');
+  await expect(page.locator('.callout-note strong')).toHaveText('plain');
+  await expect(page.locator('.callout-warning .callout-title')).toHaveText('Careful');
+  await expect(page.locator('.callout-warning code')).toHaveText('rm -rf');
+  await expect(page.locator('.callout-caution')).toContainText('<script>window.__pwned=2</script>');
+  expect(await page.evaluate(() => window.__pwned)).toBeUndefined();
+  await expect(page.locator('.callout img, .callout script')).toHaveCount(0);
+});
+
+test('the dependency graph draws an arrowhead for every edge and a progress bar in every task box', async ({ page, plan }) => {
+  await page.goto(plan.url);
+  const card = page.locator('.graph-card');
+  await expect(card.locator('.node')).toHaveCount(3);
+  await expect(card.locator('.edge')).toHaveCount(3);
+  await expect(card.locator('.head')).toHaveCount(3);
+  await expect(card.locator('.bar-bg')).toHaveCount(3);
+  await expect(card.locator('.node[data-node=T1] .bar')).toHaveCount(1);
+});

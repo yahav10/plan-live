@@ -160,3 +160,30 @@ test('a small wobble under 4px is still a click on the node', async ({ page, pla
   await page.mouse.up();
   await expect(svg).toHaveClass(/focus/);
 });
+
+test('? opens the shortcut list, and the key hints follow the platform', async ({ page, plan }) => {
+  await page.addInitScript(() => { Object.defineProperty(navigator, 'userAgentData', { get: () => undefined }); Object.defineProperty(navigator, 'platform', { get: () => 'Win32' }); });
+  await page.goto(plan.url);
+  await expect(page.locator('h1.title')).toBeVisible();
+  await expect(page.locator('.pill .kbd')).toHaveText('Ctrl K');
+  await page.keyboard.press('?');
+  await expect(page.locator('#keys')).toBeVisible();
+  await expect(page.locator('#keys')).toContainText('Jump to a section');
+  await expect(page.locator('#keys kbd', { hasText: 'Ctrl' })).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(page.locator('#keys')).toBeHidden();
+  await page.locator('[data-act=keys]').click();
+  await expect(page.locator('#keys')).toBeVisible();
+  await page.locator('#keys').click({ position: { x: 2, y: 2 } });
+  await expect(page.locator('#keys')).toBeHidden();
+});
+
+test('on a Mac the hint shows the command key and ? is ignored while typing', async ({ page, plan }) => {
+  await page.addInitScript(() => { Object.defineProperty(navigator, 'userAgentData', { get: () => undefined }); Object.defineProperty(navigator, 'platform', { get: () => 'MacIntel' }); });
+  await page.goto(plan.url);
+  await expect(page.locator('.pill .kbd')).toHaveText('⌘ K');
+  await page.keyboard.press('c');
+  await page.locator('#composer-body').pressSequentially('what is this?');
+  await expect(page.locator('#keys')).toBeHidden();
+  await expect(page.locator('#composer-body')).toHaveValue('what is this?');
+});

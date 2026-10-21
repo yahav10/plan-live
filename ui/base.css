@@ -28,7 +28,7 @@ button { font: inherit; }
 .pill .ptxt.swap { transform: translateY(7px); opacity: 0; }
 .pill small { font: 11px var(--font-mono); color: var(--muted); flex: none; }
 .pill .kbd { flex: none; }
-@media (max-width: 760px) { .pill .kbd, .pill small { display: none; } }
+@media (max-width: 760px) { .pill .kbd, .pill small, .keys-btn { display: none; } }
 .jump { position: fixed; top: 54px; left: 50%; width: min(340px, calc(100vw - 24px)); z-index: 20; padding: 6px; border-radius: 14px; border: 1px solid var(--line-strong); background: color-mix(in srgb, var(--bg) 80%, transparent); backdrop-filter: blur(22px) saturate(170%); box-shadow: 0 16px 38px -14px rgba(0, 0, 0, .5); opacity: 0; transform: translateX(-50%) scale(.97); transform-origin: top center; transition: transform .22s var(--ease), opacity .18s; }
 .jump[hidden] { display: none; }
 .jump.in { opacity: 1; transform: translateX(-50%) scale(1); }
@@ -129,7 +129,16 @@ dialog.confirm h3 { margin: 0 0 10px; font-family: var(--font-display); font-wei
 dialog.confirm p { margin: 0 0 10px; color: var(--ink-2); }
 dialog.confirm .warn { color: var(--warn); }
 dialog.confirm .hint { color: var(--muted); font-size: 13px; }
+dialog.confirm .keylist { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+dialog.confirm .keylist li { display: flex; align-items: center; justify-content: space-between; gap: 16px; color: var(--ink-2); }
+dialog.confirm kbd { display: inline-block; min-width: 24px; padding: 2px 7px; border: 1px solid var(--line-strong); border-bottom-width: 2px; border-radius: 6px; background: var(--chip); color: var(--ink); font: 600 12px var(--font-mono); text-align: center; }
 dialog.confirm .actions { justify-content: flex-end; margin-top: 16px; }
+
+/* callouts */
+.callout { --c: var(--accent-ink); padding: 10px 14px 12px; border-left: 3px solid var(--c); border-radius: 4px 10px 10px 4px; background: color-mix(in srgb, var(--c) 9%, transparent); }
+.callout-tip { --c: var(--ok); } .callout-important { --c: var(--note); } .callout-warning { --c: var(--warn); } .callout-caution { --c: var(--del); }
+.callout-title { font: 600 11px var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--c); }
+.callout p { margin: 6px 0 0; color: var(--ink-2); }
 
 /* images and embeds */
 .plan-img { margin: 0; }
@@ -169,9 +178,13 @@ dialog.confirm .actions { justify-content: flex-end; margin-top: 16px; }
 .dag .node text.m { fill: var(--muted); font: 11px var(--font-mono); }
 .dag .edge { fill: none; stroke: var(--edge); stroke-width: 1.8; }
 .dag .edge.flow { stroke: var(--accent); stroke-dasharray: 6 6; animation: dash 1.2s linear infinite; }
+.dag .head { fill: var(--edge); transition: fill .3s, opacity .3s; }
+.dag .head.flow { fill: var(--accent); } .dag .head.hl { fill: var(--note); }
+.dag .bar-bg { fill: var(--track); } .dag .bar { fill: var(--accent); } .dag .bar.ok { fill: var(--ok); }
+.dag-scroll { overflow-x: auto; }
 .dag .elabel { fill: var(--muted); font: 11px var(--font-mono); }
 .dag.zoomable { cursor: grab; touch-action: none; border-radius: 10px; background: var(--chip); }
-.dag.focus .edge:not(.hl) { opacity: .2; } .dag .edge.hl { stroke: var(--note); stroke-width: 2.4; }
+.dag.focus .edge:not(.hl), .dag.focus .head:not(.hl) { opacity: .2; } .dag .edge.hl { stroke: var(--note); stroke-width: 2.4; }
 @keyframes dash { to { stroke-dashoffset: -24; } }
 .arch-hint { margin-top: 6px; font: 11px var(--font-mono); color: var(--muted); }
 .mermaid-block { display: flex; justify-content: center; min-height: 40px; }
@@ -249,6 +262,7 @@ html { scroll-behavior: smooth; }
 .intro .ring { animation: ring-sweep 1.2s var(--ease) .25s both; }
 .intro .pill { animation: pill-in .6s var(--ease) .3s both; }
 .intro .dag .edge:not(.flow) { stroke-dasharray: 1; animation: draw 1s var(--ease) .5s both; }
+.intro .dag .head { animation: node-in .6s var(--ease) .9s both; }
 .intro .dag .node { animation: node-in .6s var(--ease) both; animation-delay: .35s; }
 .intro .dag .node:nth-of-type(2) { animation-delay: .5s; } .intro .dag .node:nth-of-type(3) { animation-delay: .65s; }
 .intro .dag .node:nth-of-type(n+4) { animation-delay: .8s; }
