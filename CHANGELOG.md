@@ -2,7 +2,7 @@
 
 All notable changes to plan-live. Versions follow [semver](https://semver.org).
 
-## Unreleased
+## 0.10.0
 
 ### Added
 - Autoplay for embedded animations, chosen by the reader or the exporter, never by the plan. **Autoplay animations in this plan** in an embed's header trusts the plan's animations in your browser: they start by themselves as they scroll into view, the choice is remembered per plan file, and an animation whose code is later edited goes back to click-to-run until you trust it again. Reduced motion and an explicit Stop keep animations from starting.
