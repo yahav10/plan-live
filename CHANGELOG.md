@@ -2,7 +2,7 @@
 
 All notable changes to plan-live. Versions follow [semver](https://semver.org).
 
-## Unreleased
+## 0.8.0
 
 ### Added
 - Callouts. `> [!NOTE]`, `TIP`, `IMPORTANT`, `WARNING` and `CAUTION` alerts render as coloured boxes, with an optional custom title.
