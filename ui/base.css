@@ -208,6 +208,8 @@ body.has-tb .rail, body.has-tb .outline { top: calc(var(--strip-b, 49px) + 36px)
 .plan-img.blocked, .embed-static { padding: 14px 16px; border: 1px dashed var(--line-strong); border-radius: 12px; color: var(--muted); font-size: 13px; }
 .embed { border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; background: var(--card); }
 .embed-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 6px 12px; border-bottom: 1px solid var(--line); font: 600 11px var(--font-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.embed-trust { margin-left: auto; margin-right: 12px; display: inline-flex; align-items: center; gap: 10px; }
+.embed-note { color: var(--warn); }
 .embed-tools { display: flex; gap: 12px; }
 .embed-stage { position: relative; height: var(--h, 320px); }
 .embed-frame { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; background: transparent; }

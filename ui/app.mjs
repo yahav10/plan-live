@@ -13,6 +13,7 @@ import { filterSections, renderJumpRows, renderSpine, renderPill } from './compo
 import { runnable, blockedBy } from './components/run.mjs';
 import { taskStatuses } from './components/status.mjs';
 import { renderOutline } from './components/outline.mjs';
+import { embedIds, parseTrusted, serializeTrusted } from './components/trust.mjs';
 import { renderTitlebar } from './components/titlebar.mjs';
 import { renderFocus, focusTarget } from './components/focus.mjs';
 import { statusLine, renderBottombar, diffAlerts } from './components/phone.mjs';
@@ -22,7 +23,7 @@ import { exportName, toCsv, reviewMarkdown, download, diagramSvg, svgToPng, stan
 const calm = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 const smooth = () => (calm() ? 'auto' : 'smooth');
 
-export const state = { plan: null, review: { comments: [], batches: [], revisions: [] }, choice: null, online: false, active: null, anchor: null, selAnchor: null, composing: null, jump: { open: false, q: '', act: 0 }, scroll: 0, spine: false, prev: new Map(), checked: new Map(), seen: new Set(), embeds: new Set(), fold: null, focus: { on: false, task: null }, view: 'plan', alerts: false, audio: null, reviewSeen: false };
+export const state = { plan: null, review: { comments: [], batches: [], revisions: [] }, choice: null, online: false, active: null, anchor: null, selAnchor: null, composing: null, jump: { open: false, q: '', act: 0 }, scroll: 0, spine: false, prev: new Map(), checked: new Map(), seen: new Set(), embeds: new Set(), fold: null, focus: { on: false, task: null }, view: 'plan', alerts: false, audio: null, reviewSeen: false, trusted: null, stopped: new Set() };
 export const hooks = {
   visual,
   afterSections: (root, mode) => {
@@ -30,6 +31,7 @@ export const hooks = {
     root.querySelectorAll('svg.dag.zoomable').forEach(attachPanZoom);
     addDiagramTools(root);
     for (const id of state.embeds) { const host = root.querySelector(`[data-embed="${id}"]`); if (host) playEmbed(host); }
+    observeTrusted(root);
   },
   renderRail,
 };
@@ -103,6 +105,33 @@ function trackActive() {
   const max = document.documentElement.scrollHeight - innerHeight;
   state.scroll = max > 0 ? Math.min(1, Math.max(0, scrollY / max)) : 0;
   paintScroll();
+}
+
+const trustKey = () => `trust-${hashStr(state.plan?.path ?? '')}`;
+const calmNow = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+// A trusted animation starts by itself once it scrolls into view. Reduced motion and an explicit Stop both win.
+const autoplayObserver = new IntersectionObserver(entries => {
+  for (const e of entries) {
+    if (!e.isIntersecting) continue;
+    autoplayObserver.unobserve(e.target);
+    const host = e.target, id = host.dataset.embed;
+    if (calmNow() || host.dataset.trust !== 'on' || state.stopped.has(id) || host.querySelector('iframe')) continue;
+    state.embeds.add(id);
+    playEmbed(host);
+  }
+}, { rootMargin: '0px 0px 80px 0px' });
+
+function observeTrusted(root) {
+  root.querySelectorAll('.embed[data-trust="on"]').forEach(h => { if (!h.querySelector('iframe') && !state.stopped.has(h.dataset.embed)) autoplayObserver.observe(h); });
+}
+
+function setTrusted(set) {
+  state.trusted = set;
+  state.stopped.clear();
+  remember(trustKey(), serializeTrusted(set));
+  $('sections')._html = null;
+  render();
 }
 
 const foldKey = () => `fold-${hashStr(state.plan?.path ?? '')}`;
@@ -324,6 +353,7 @@ export function render() {
   pushEmbedTokens();
   document.title = state.plan.model.title || state.plan.file;
   state.fold ??= loadFold();
+  state.trusted ??= parseTrusted(recall(trustKey()));
   setHTML($('strip'), renderStrip(state));
   measureStrip();
   paintScroll();
@@ -457,6 +487,7 @@ async function runExport(fmt) {
     }
     const jobs = {
       html: async () => [exportName(file, '', 'html'), await standaloneHtml(file), 'text/html;charset=utf-8'],
+      'html-auto': async () => [exportName(file, '', 'html'), await standaloneHtml(file, { autoplay: true }), 'text/html;charset=utf-8'],
       json: () => [exportName(file, 'plan', 'json'), JSON.stringify(plan.model, null, 2) + '\n', 'application/json'],
       csv: () => [exportName(file, 'tasks', 'csv'), '\uFEFF' + toCsv(plan.model), 'text/csv;charset=utf-8'],
       'review-md': () => [exportName(file, 'review', 'md'), reviewMarkdown(review, plan.model, file), 'text/markdown;charset=utf-8'],
@@ -674,8 +705,10 @@ Object.assign(actions, {
   tile: el => { const first = [...taskStatuses(state.plan.model).byId.values()].find(t => t.status === el.dataset.status); if (first) go(first.sectionId); },
   keys: openKeys,
   'keys-close': () => $('keys').close(),
-  'embed-play': el => { const host = el.closest('.embed'); state.embeds.add(host.dataset.embed); playEmbed(host); },
-  'embed-stop': el => { const host = el.closest('.embed'); state.embeds.delete(host.dataset.embed); stopEmbed(host); },
+  'embed-play': el => { const host = el.closest('.embed'); state.stopped.delete(host.dataset.embed); state.embeds.add(host.dataset.embed); playEmbed(host); },
+  'embed-stop': el => { const host = el.closest('.embed'); state.embeds.delete(host.dataset.embed); state.stopped.add(host.dataset.embed); stopEmbed(host); },
+  trust: () => setTrusted(new Set([...state.trusted, ...embedIds(state.plan.model)])),
+  untrust: () => setTrusted(new Set()),
   'embed-replay': el => playEmbed(el.closest('.embed')),
   'run-cancel': () => $('confirm').close(),
   'run-confirm': queueRun,

@@ -15,7 +15,7 @@ test('export menu lists every format and closes on outside click', async ({ page
   await ready(page, plan);
   await page.locator('[data-act=export-menu]').click();
   await expect(page.locator('#export-menu')).toBeVisible();
-  await expect(page.locator('#export-menu [data-fmt]')).toHaveCount(8);
+  await expect(page.locator('#export-menu [data-fmt]')).toHaveCount(9);
   await page.locator('h1.title').click();
   await expect(page.locator('#export-menu')).toBeHidden();
 });

@@ -14,9 +14,15 @@ export function renderImage({ alt, src, title }) {
   return `<figure class="plan-img"><img src="${esc(url)}" alt="${esc(alt)}" loading="lazy">${title ? `<figcaption>${esc(title)}</figcaption>` : ''}</figure>`;
 }
 
-export function renderEmbed({ id, height }) {
-  return `<div class="embed" data-embed="${esc(id)}" style="--h:${Number(height) || 320}px">`
-    + '<div class="embed-head"><span>Embedded animation · sandboxed</span><span class="embed-tools"><button class="link" data-act="embed-replay" hidden>Replay</button><button class="link" data-act="embed-stop" hidden>Stop</button></span></div>'
+const TRUST = {
+  off: '<button class="link" data-act="trust">Autoplay animations in this plan</button>',
+  on: '<button class="link" data-act="untrust">Autoplay on · turn off</button>',
+  changed: '<span class="embed-note">Changed since you trusted this plan</span><button class="link" data-act="trust">Trust again</button>',
+};
+
+export function renderEmbed({ id, height }, { trust = 'off' } = {}) {
+  return `<div class="embed" data-embed="${esc(id)}" data-trust="${trust}" style="--h:${Number(height) || 320}px">`
+    + `<div class="embed-head"><span>Embedded animation · sandboxed</span><span class="embed-trust">${TRUST[trust] ?? TRUST.off}</span><span class="embed-tools"><button class="link" data-act="embed-replay" hidden>Replay</button><button class="link" data-act="embed-stop" hidden>Stop</button></span></div>`
     + '<div class="embed-stage"><button class="btn embed-play" data-act="embed-play">' + icon('play', 12) + ' Click to run</button></div></div>';
 }
 

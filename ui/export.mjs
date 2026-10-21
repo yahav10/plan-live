@@ -122,7 +122,7 @@ const toDataUrl = async url => {
   return new Promise((ok, fail) => { const r = new FileReader(); r.onload = () => ok(r.result); r.onerror = fail; r.readAsDataURL(blob); });
 };
 
-export async function standaloneHtml(file) {
+export async function standaloneHtml(file, { autoplay = false } = {}) {
   const { theme, mode } = document.documentElement.dataset;
   const get = async u => (await fetch(u)).text();
   const [base, themeCss, fontsCss] = await Promise.all([get('/base.css'), get(`/themes/${theme}.css`), get('/vendor/fonts.css')]);
@@ -139,8 +139,10 @@ export async function standaloneHtml(file) {
       const wrap = document.createElement('div');
       wrap.className = 'embed embed-export';
       wrap.setAttribute('style', host.getAttribute('style') ?? '');
-      wrap.innerHTML = `<div class="embed-head"><span>Embedded animation · sandboxed</span></div><details><summary class="btn">${icon('play', 12)} Click to run</summary><div class="embed-stage"><iframe class="embed-frame" sandbox="allow-scripts" loading="lazy" referrerpolicy="no-referrer" title="Embedded animation"></iframe></div></details>`;
-      wrap.querySelector('iframe').setAttribute('data-doc', page);
+      wrap.innerHTML = autoplay
+        ? '<div class="embed-head"><span>Embedded animation · sandboxed</span></div><div class="embed-stage"><iframe class="embed-frame" sandbox="allow-scripts" referrerpolicy="no-referrer" title="Embedded animation"></iframe></div>'
+        : `<div class="embed-head"><span>Embedded animation · sandboxed</span></div><details><summary class="btn">${icon('play', 12)} Click to run</summary><div class="embed-stage"><iframe class="embed-frame" sandbox="allow-scripts" loading="lazy" referrerpolicy="no-referrer" title="Embedded animation"></iframe></div></details>`;
+      wrap.querySelector('iframe').setAttribute(autoplay ? 'srcdoc' : 'data-doc', page);
       host.replaceWith(wrap);
       embeds++;
     } catch {
@@ -155,8 +157,8 @@ export async function standaloneHtml(file) {
   }
   main.querySelectorAll('[data-act]').forEach(n => n.removeAttribute('data-act'));
   // A frame's code stays inert text in the file: no literal script tag outside the sandboxed frame.
-  const body = main.innerHTML.replace(/data-doc="([^"]*)"/g, (_, v) => `data-doc="${v.replace(/</g, '&lt;')}"`);
-  const opener = embeds ? `<script>document.addEventListener('toggle',function(e){var d=e.target,f=d.querySelector&&d.querySelector('iframe[data-doc]');if(d.open&&f&&!f.srcdoc)f.srcdoc=f.getAttribute('data-doc')},true)</script>\n` : '';
+  const body = main.innerHTML.replace(/(data-doc|srcdoc)="([^"]*)"/g, (_, k, v) => `${k}="${v.replace(/</g, '&lt;')}"`);
+  const opener = embeds && !autoplay ? `<script>document.addEventListener('toggle',function(e){var d=e.target,f=d.querySelector&&d.querySelector('iframe[data-doc]');if(d.open&&f&&!f.srcdoc)f.srcdoc=f.getAttribute('data-doc')},true)</script>\n` : '';
   const title = document.title || file;
   const extra = '.grid.export { display: block; max-width: 980px; } .export-foot { max-width: 980px; margin: 0 auto; padding: 0 34px 40px; font: 12px var(--font-mono); color: var(--muted); } main { padding-bottom: 20px; }';
   return `<!doctype html>\n<html lang="en" data-theme="${theme}" data-mode="${mode}">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1">\n<meta name="generator" content="plan-live">\n<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; font-src data:; img-src data:${embeds ? "; script-src 'unsafe-inline'" : ''}">\n<title>${escHtml(title)}</title>\n<style>\n${fonts}\n${base}\n${themeCss}\n${extra}\n</style>\n</head>\n<body>\n<div class="grid export"><main>${body}</main></div>\n${opener}<footer class="export-foot">Exported from plan-live · ${new Date().toISOString().slice(0, 10)} · ${escHtml(file)}</footer>\n</body>\n</html>\n`;

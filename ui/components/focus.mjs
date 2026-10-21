@@ -3,6 +3,7 @@ import { icon } from '../icons.mjs';
 import { renderBlock, renderTaskMeta, openCount, badge } from './sections.mjs';
 import { renderRunButton } from './run.mjs';
 import { taskStatuses, STATUS_LABEL } from './status.mjs';
+import { trustState } from './trust.mjs';
 
 export function focusTarget({ plan, focus }) {
   const { byId, now } = taskStatuses(plan.model);
@@ -18,7 +19,7 @@ export function renderFocus(state, visual = null) {
   const s = model.sections.find(x => x.id === target.sectionId);
   const next = model.tasks.find(t => t.sectionId === s.id && !t.checked);
   const comments = review.comments;
-  const ctxFor = (index) => ({ sectionId: s.id, index, comments, doing: model.tasks.find(t => !t.checked)?.id, next: next?.id, visual, model });
+  const ctxFor = (index) => ({ sectionId: s.id, index, comments, doing: model.tasks.find(t => !t.checked)?.id, next: next?.id, visual, model, trust: id => trustState(state.trusted ?? new Set(), id) });
   const away = now && now.sectionId !== target.sectionId;
   const nav = `<span class="focus-nav"><button class="ibtn" data-act="focus-prev" aria-label="Previous task"${i <= 0 ? ' disabled' : ''}>${icon('chev-left', 14)}</button><span class="focus-pos">${i + 1} of ${order.length}</span><button class="ibtn" data-act="focus-next" aria-label="Next task"${i >= order.length - 1 ? ' disabled' : ''}>${icon('chev-right', 14)}</button></span>`;
   const bar = `<div class="focus-bar"><button class="btn" data-act="focus-exit">Back to the plan</button>${nav}${away ? '<button class="link" data-act="focus-follow">Back to the current task</button>' : ''}</div>`;

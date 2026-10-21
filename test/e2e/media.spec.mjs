@@ -192,3 +192,81 @@ test('the dependency graph draws an arrowhead for every edge and a progress bar 
   await expect(card.locator('.bar-bg')).toHaveCount(3);
   await expect(card.locator('.node[data-node=T1] .bar')).toHaveCount(1);
 });
+
+const twoEmbeds = base => base + '\n## First\n```embed height=120\n<div id="out">one</div><script>document.getElementById("out").textContent="ran one"</script>\n```\n\n' + '## Filler\n' + Array.from({ length: 40 }, (_, i) => `Filler paragraph ${i} to push the next animation below the fold.\n`).join('\n') + '\n## Second\n```embed height=120\n<div id="out">two</div><script>document.getElementById("out").textContent="ran two"</script>\n```\n';
+
+test('trusting the plan makes its animations autoplay as they scroll into view, and only while their code is unchanged', async ({ page, plan }) => {
+  plan.write(twoEmbeds(plan.read()));
+  await page.goto(plan.url);
+  const embeds = page.locator('.embed');
+  await expect(embeds).toHaveCount(2);
+  await expect(embeds.first()).toHaveAttribute('data-trust', 'off');
+  await expect(page.locator('iframe.embed-frame')).toHaveCount(0);
+  await embeds.first().locator('[data-act=trust]').click();
+  await expect(embeds.first()).toHaveAttribute('data-trust', 'on');
+  await expect(embeds.first().locator('iframe.embed-frame')).toHaveCount(1);
+  await expect(page.frameLocator('iframe.embed-frame').first().locator('#out')).toHaveText('ran one');
+  await expect(embeds.nth(1).locator('iframe')).toHaveCount(0);
+  await embeds.nth(1).scrollIntoViewIfNeeded();
+  await expect(embeds.nth(1).locator('iframe.embed-frame')).toHaveCount(1);
+  await page.reload();
+  await expect(page.locator('.embed').nth(1).locator('iframe.embed-frame')).toHaveCount(1);
+  await page.evaluate(() => scrollTo(0, 0));
+  await expect(page.locator('.embed').first().locator('iframe.embed-frame')).toHaveCount(1);
+  plan.write(plan.read().replace('ran one', 'ran one, edited'));
+  await expect(page.locator('.embed').first()).toHaveAttribute('data-trust', 'changed');
+  await expect(page.locator('.embed').first().locator('iframe')).toHaveCount(0);
+  await expect(page.locator('.embed').first()).toContainText('Changed since you trusted this plan');
+  await expect(page.locator('.embed').nth(1)).toHaveAttribute('data-trust', 'on');
+});
+
+test('turning autoplay off, stopping an animation, and reduced motion all keep it from starting by itself', async ({ page, plan, browser }) => {
+  plan.write(twoEmbeds(plan.read()));
+  await page.goto(plan.url);
+  await page.locator('.embed').first().locator('[data-act=trust]').click();
+  await expect(page.locator('.embed').first().locator('iframe.embed-frame')).toHaveCount(1);
+  await page.locator('.embed').first().locator('[data-act=embed-stop]').click();
+  await expect(page.locator('.embed').first().locator('iframe')).toHaveCount(0);
+  plan.write(plan.read() + '\nA late edit elsewhere.\n');
+  await expect(page.locator('body')).toContainText('A late edit elsewhere.');
+  await expect(page.locator('.embed').first().locator('iframe')).toHaveCount(0);
+  await page.locator('.embed').first().locator('[data-act=untrust]').click();
+  await expect(page.locator('.embed').first()).toHaveAttribute('data-trust', 'off');
+  await page.reload();
+  await expect(page.locator('iframe.embed-frame')).toHaveCount(0);
+  await page.locator('.embed').first().locator('[data-act=trust]').click();
+  const calm = await browser.newContext({ reducedMotion: 'reduce' });
+  const q = await calm.newPage();
+  await q.goto(plan.url);
+  await q.evaluate(([k, v]) => localStorage.setItem(k, v), await page.evaluate(() => Object.entries(localStorage).find(([k]) => k.includes('trust')))) ;
+  await q.reload();
+  await expect(q.locator('.embed').first()).toHaveAttribute('data-trust', 'on');
+  await q.waitForTimeout(500);
+  await expect(q.locator('iframe.embed-frame')).toHaveCount(0);
+  await calm.close();
+});
+
+test('an export can start its animations on open, and they are still sandboxed with no network', async ({ page, plan, browser }, info) => {
+  plan.write(mediaPlan(plan.read()));
+  await page.goto(plan.url + '&theme=fluid&mode=light');
+  await page.locator('[data-act=export-menu]').click();
+  await expect(page.locator('[data-fmt=html-auto]')).toContainText('autoplay');
+  const [d] = await Promise.all([page.waitForEvent('download'), page.locator('[data-fmt=html-auto]').click()]);
+  const file = info.outputPath('auto.html');
+  await d.saveAs(file);
+  const html = readFileSync(file, 'utf8');
+  expect(html).not.toMatch(/<script/i);
+  expect(html).toContain('srcdoc="');
+  expect(html).toContain('sandbox="allow-scripts"');
+  expect(html).not.toContain('allow-same-origin');
+  expect(html).not.toContain('<summary class="btn"');
+  expect(html.match(/<meta http-equiv="Content-Security-Policy" content="([^"]+)">/)[1]).toContain("script-src 'unsafe-inline'");
+  const open = await browser.newPage();
+  await open.goto('file://' + file);
+  const out = open.frameLocator('iframe.embed-frame').locator('#out');
+  await expect(out).toContainText('"parent":"blocked"');
+  const r = JSON.parse(await out.textContent());
+  expect(r.cookie).toBe('blocked');
+  expect(r.fetch).toBe('blocked');
+  await open.close();
+});

@@ -4,6 +4,7 @@ import { renderRunButton } from './run.mjs';
 import { renderImage, renderEmbed } from './media.mjs';
 import { taskStatuses, foldedSections, STATUS_LABEL } from './status.mjs';
 import { renderTableRows } from './phone.mjs';
+import { trustState } from './trust.mjs';
 
 export const openCount = (comments, pred) => comments.filter(c => (c.status === 'draft' || c.status === 'queued') && pred(c)).length;
 export const badge = n => (n ? `<span class="pill c">${icon('comment', 12)} ${n}</span>` : '');
@@ -31,7 +32,7 @@ export function renderBlock(b, ctx) {
     case 'callout': { const k = CALLOUT[b.kind] ? b.kind : 'note'; return wrap(`<div class="callout callout-${k}" role="note"><div class="callout-title">${icon(CALLOUT_ICON[k], 14)}${esc(b.title || CALLOUT[k])}</div>${b.paras.map(t => `<p>${inline(t)}</p>`).join('')}</div>`); }
     case 'quote': return wrap(`<blockquote class="quote">${b.paras.map(t => `<p>${inline(t)}</p>`).join('')}</blockquote>`);
     case 'image': return wrap(renderImage(b));
-    case 'embed': return wrap(renderEmbed(b));
+    case 'embed': return wrap(renderEmbed(b, { trust: ctx.trust?.(b.id) ?? 'off' }));
     case 'code': return wrap(`<pre class="code"><code>${esc(b.code)}</code></pre>${b.error ? `<div class="block-error">Couldn't parse ${esc(b.lang)} block: ${esc(b.error)}</div>` : ''}`);
     default: return ctx.visual?.(b, wrap) ?? wrap(`<pre class="code"><code>${esc(JSON.stringify(b, null, 2))}</code></pre>`);
   }
@@ -45,11 +46,12 @@ export function renderTaskMeta(t) {
   return `<div class="task-meta"><span class="st st-${t.status}">${STATUS_LABEL[t.status]}</span>${needs}<span class="tm-bar st-${t.status}" style="--p:${pct}"><i></i></span></div>`;
 }
 
-export function renderSections({ plan, review, fold = {} }, visual) {
+export function renderSections({ plan, review, fold = {}, trusted = new Set() }, visual) {
   const { model } = plan;
   const comments = review.comments;
   const doing = model.tasks.find(t => !t.checked)?.id;
-  const ctxFor = (sectionId, index) => ({ sectionId, index, comments, doing, visual, model });
+  const trust = id => trustState(trusted, id);
+  const ctxFor = (sectionId, index) => ({ sectionId, index, comments, doing, visual, model, trust });
   const intro = model.preamble.filter(b => !(b.type === 'paragraph' && /^\*\*[^*]+?:\*\*/.test(b.text)));
   const introHtml = intro.length ? `<section class="card intro" id="intro" data-sec="intro">${intro.map((b, i) => renderBlock(b, ctxFor('intro', i))).join('')}</section>` : '';
   const graphHtml = visual?.graph?.(model) ?? '';

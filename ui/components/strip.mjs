@@ -10,7 +10,7 @@ export function fmtAge(ms) {
 }
 
 const EXPORTS = [
-  ['Plan', [['md', 'Markdown', '.md'], ['html', 'Web page', '.html'], ['pdf', 'PDF', 'print'], ['copy-md', 'Copy as Markdown', 'clipboard']]],
+  ['Plan', [['md', 'Markdown', '.md'], ['html', 'Web page', '.html'], ['html-auto', 'Web page, autoplay', 'plays on open'], ['pdf', 'PDF', 'print'], ['copy-md', 'Copy as Markdown', 'clipboard']]],
   ['Data', [['json', 'Plan model', '.json'], ['csv', 'Tasks', '.csv']]],
   ['Review', [['review-md', 'Notes', '.md'], ['review-json', 'Data', '.json']]],
 ];
