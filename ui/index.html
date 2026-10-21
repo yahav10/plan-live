@@ -2,7 +2,7 @@
 <html lang="en" data-theme="aurora" data-mode="dark">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, interactive-widget=resizes-content">
   <title>plan-live</title>
   <link rel="stylesheet" href="/vendor/fonts.css">
   <link rel="stylesheet" href="/base.css">
@@ -10,9 +10,11 @@
   <link rel="stylesheet" href="/themes/editorial.css">
   <link rel="stylesheet" href="/themes/blueprint.css">
   <link rel="stylesheet" href="/themes/fluid.css">
+  <link rel="stylesheet" href="/themes/slate.css">
 </head>
 <body>
   <header class="strip" id="strip"></header>
+  <div id="titlebar" class="titlebar" hidden></div>
   <div id="jump" class="jump" role="dialog" aria-label="Jump to section" hidden>
     <input class="jq" type="text" placeholder="Jump to a section" aria-label="Filter sections" autocomplete="off" spellcheck="false">
     <div class="jlist" role="listbox" aria-label="Sections"></div>
@@ -20,6 +22,7 @@
   </div>
   <div id="spine" class="spine" hidden></div>
   <div class="grid">
+    <nav id="outline" class="outline" aria-label="Plan outline"></nav>
     <main>
       <div class="hero" id="hero"></div>
       <div id="sections"></div>
@@ -37,7 +40,9 @@
       <div id="rail-bottom"></div>
     </aside>
   </div>
-  <button id="sel-comment" class="sel-comment" data-act="comment-selection" hidden>💬 Comment</button>
+  <button id="sel-comment" class="sel-comment" data-act="comment-selection" hidden>Comment</button>
+  <div id="statusbar" class="statusbar" role="status" hidden></div>
+  <nav id="bottombar" class="bottombar" aria-label="Views"></nav>
   <div id="toast" class="toast" role="status" hidden></div>
   <dialog id="confirm" class="confirm" aria-labelledby="confirm-title"></dialog>
   <dialog id="keys" class="confirm" aria-labelledby="keys-title"></dialog>

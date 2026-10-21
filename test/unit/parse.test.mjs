@@ -190,11 +190,29 @@ test('a GitHub-style alert becomes a callout block with its kind, title and para
 
 test('only the five known alert kinds are callouts, and never inside code', () => {
   const m = parse('## A\n> [!FOO]\n> nope\n\n```md\n> [!NOTE]\n> still code\n```\n');
-  assert.deepEqual(m.sections[0].blocks.map(b => b.type), ['paragraph', 'code']);
+  assert.deepEqual(m.sections[0].blocks.map(b => b.type), ['quote', 'code'], 'an unknown kind is just a quote');
   for (const k of ['NOTE', 'TIP', 'IMPORTANT', 'WARNING', 'CAUTION']) assert.equal(parse(`## A\n> [!${k}]\n> x\n`).sections[0].blocks[0].kind, k.toLowerCase());
 });
 
 test('an alert ends at the first line that is not part of the quote', () => {
   const m = parse('## A\n> [!NOTE]\n> inside\nplain line right after\n');
   assert.deepEqual(m.sections[0].blocks.map(b => b.type), ['callout', 'paragraph']);
+});
+
+test('a plain blockquote becomes a quote block, and checkboxes inside it are not plan steps', () => {
+  const m = parse('## A\n> First line\n> still the first paragraph\n>\n> Second paragraph\n\nAfter.\n\n> - [ ] not a step\n');
+  const [q, p, q2] = m.sections[0].blocks;
+  assert.deepEqual(q, { type: 'quote', paras: ['First line still the first paragraph', 'Second paragraph'], line: 2 });
+  assert.equal(p.type, 'paragraph');
+  assert.deepEqual([q2.type, q2.paras], ['quote', ['- [ ] not a step']]);
+  assert.equal(m.progress.total, 0);
+});
+
+test('an alert is still a callout and a quote right after it is its own block', () => {
+  const m = parse('## A\n> [!NOTE]\n> inside\n\n> plain quote\n');
+  assert.deepEqual(m.sections[0].blocks.map(b => b.type), ['callout', 'quote']);
+});
+
+test('a quote line inside a code fence stays code', () => {
+  assert.deepEqual(parse('## A\n```\n> not a quote\n```\n').sections[0].blocks.map(b => b.type), ['code']);
 });

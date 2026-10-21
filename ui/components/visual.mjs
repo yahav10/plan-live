@@ -22,6 +22,6 @@ visual.graph = model => {
   if (!model.graph.edges.length) return '';
   const firstOpen = model.tasks.find(t => !t.checked);
   const active = model.graph.nodes.find(n => n.sectionId === firstOpen?.sectionId)?.key;
-  return `<section class="card graph-card" id="graph" data-sec="graph"><h2 data-n="◇">Dependency graph</h2>`
+  return `<section class="card graph-card" id="graph" data-sec="graph"><h2 data-n="00">Dependency graph</h2>`
     + `<div class="sub">From “depends on / after / blocked by” in the plan. Click a box to jump to it.</div><div class="dag-scroll">${renderDag(model.graph.nodes, model.graph.edges, { active })}</div></section>`;
 };

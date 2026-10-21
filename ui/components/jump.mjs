@@ -1,4 +1,5 @@
 import { esc } from '../lib.mjs';
+import { icon } from '../icons.mjs';
 
 export function parseHeading(heading, index) {
   const task = heading.match(/^Task\s+(\d+)\b\s*[:.\-–—]?\s*(.*)$/i);
@@ -36,7 +37,7 @@ export function renderJumpRows({ sections, active, matches, act }) {
     const s = sections[i];
     const { label, title } = parseHeading(s.heading, i);
     const cls = ['jrow', k === act ? 'act' : '', s.id === active ? 'cur' : ''].filter(Boolean).join(' ');
-    const tail = isDone(s) ? '<i class="ck" aria-hidden="true">✓</i><span class="sr">done</span>' : `<span class="c">${count(s)}</span>`;
+    const tail = isDone(s) ? `<i class="ck" aria-hidden="true">${icon('check', 13)}</i><span class="sr">done</span>` : `<span class="c">${count(s)}</span>`;
     return `<button class="${cls}" role="option" tabindex="-1" data-jump="${esc(s.id)}"${s.id === active ? ' aria-current="true"' : ''}><span class="n">${label}</span><span class="t">${esc(title)}</span>${tail}</button>`;
   }).join('');
 }

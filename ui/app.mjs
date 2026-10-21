@@ -1,4 +1,5 @@
-import { api, toast, esc, modLabel } from './lib.mjs';
+import { api, toast, esc, modLabel, hashStr } from './lib.mjs';
+import { icon } from './icons.mjs';
 import { renderKeys } from './components/keys.mjs';
 import { resolveChoice, applyTheme, nextMode, nextTheme, remember, recall } from './theme.mjs';
 import { renderStrip, fmtAge } from './components/strip.mjs';
@@ -10,13 +11,18 @@ import { attachPanZoom } from './components/dag.mjs';
 import { renderRail, anchorLabel } from './components/review.mjs';
 import { filterSections, renderJumpRows, renderSpine, renderPill } from './components/jump.mjs';
 import { runnable, blockedBy } from './components/run.mjs';
+import { taskStatuses } from './components/status.mjs';
+import { renderOutline } from './components/outline.mjs';
+import { renderTitlebar } from './components/titlebar.mjs';
+import { renderFocus, focusTarget } from './components/focus.mjs';
+import { statusLine, renderBottombar, diffAlerts } from './components/phone.mjs';
 import { playEmbed, stopEmbed, pushEmbedTokens, stillEmbeds, restoreEmbeds } from './components/media.mjs';
 import { exportName, toCsv, reviewMarkdown, download, diagramSvg, svgToPng, standaloneHtml } from './export.mjs';
 
 const calm = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 const smooth = () => (calm() ? 'auto' : 'smooth');
 
-export const state = { plan: null, review: { comments: [], batches: [], revisions: [] }, choice: null, online: false, active: null, anchor: null, selAnchor: null, composing: null, jump: { open: false, q: '', act: 0 }, scroll: 0, spine: false, prev: new Map(), checked: new Map(), seen: new Set(), embeds: new Set() };
+export const state = { plan: null, review: { comments: [], batches: [], revisions: [] }, choice: null, online: false, active: null, anchor: null, selAnchor: null, composing: null, jump: { open: false, q: '', act: 0 }, scroll: 0, spine: false, prev: new Map(), checked: new Map(), seen: new Set(), embeds: new Set(), fold: null, focus: { on: false, task: null }, view: 'plan', alerts: false, audio: null, reviewSeen: false };
 export const hooks = {
   visual,
   afterSections: (root, mode) => {
@@ -28,6 +34,8 @@ export const hooks = {
   renderRail,
 };
 const $ = id => document.getElementById(id);
+$('sel-comment').innerHTML = `${icon('comment', 13)} Comment`;
+state.alerts = recall('alerts') === '1';
 
 function setHTML(el, html) {
   if (el._html === html) return false;
@@ -97,11 +105,78 @@ function trackActive() {
   paintScroll();
 }
 
+const foldKey = () => `fold-${hashStr(state.plan?.path ?? '')}`;
+function loadFold() {
+  try { return JSON.parse(recall(foldKey()) ?? '{}') || {}; } catch { return {}; }
+}
+
+function paintOutline() {
+  if (!state.plan) return;
+  const { model } = state.plan;
+  setHTML($('outline'), renderOutline({ model, active: state.active, statuses: taskStatuses(model) }));
+}
+
+function measureStrip() {
+  const strip = $('strip');
+  if (strip) document.documentElement.style.setProperty('--strip-b', `${Math.round(strip.getBoundingClientRect().bottom)}px`);
+}
+
+function paintTitlebar() {
+  const bar = $('titlebar');
+  const shown = !state.focus.on && bar.innerHTML !== '' && $('hero').getBoundingClientRect().bottom < ($('strip').getBoundingClientRect().bottom + 4);
+  if (bar.hidden === shown) bar.hidden = !shown;
+  document.body.classList.toggle('has-tb', shown);
+}
+
+function paintPhone() {
+  setHTML($('bottombar'), renderBottombar({ view: state.view, review: state.review, alerts: state.alerts }));
+  const line = statusLine(state.review);
+  setHTML($('statusbar'), line ? `<button class="sb sb-${line.kind}" data-act="view" data-view="review">${esc(line.text)}</button>` : '');
+  $('statusbar').hidden = !line;
+  document.body.classList.toggle('show-review', state.view === 'review');
+}
+
+function setView(view) {
+  state.view = view;
+  if (view === 'now') {
+    if (taskStatuses(state.plan.model).now) setFocus(true); else { state.view = 'plan'; toast('Nothing left to do'); }
+  } else if (state.focus.on) setFocus(false);
+  render();
+  if (view === 'review') scrollTo({ top: 0 });
+}
+
+function beep() {
+  const ctx = state.audio;
+  if (!ctx) return;
+  const osc = ctx.createOscillator(), gain = ctx.createGain();
+  osc.frequency.value = 880;
+  gain.gain.setValueAtTime(0.08, ctx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.18);
+  osc.connect(gain).connect(ctx.destination);
+  osc.start();
+  osc.stop(ctx.currentTime + 0.2);
+}
+
+function toggleAlerts() {
+  state.alerts = !state.alerts;
+  remember('alerts', state.alerts ? '1' : '0');
+  if (state.alerts && !state.audio) { try { state.audio = new (globalThis.AudioContext ?? globalThis.webkitAudioContext)(); } catch { /* no sound on this browser */ } }
+  toast(state.alerts ? 'Alerts on: a tone and a buzz when Claude answers' : 'Alerts off');
+  paintPhone();
+}
+
+function alertUser(msg) {
+  toast(msg);
+  beep();
+  navigator.vibrate?.(60);
+}
+
 function refreshPill() {
   const pill = document.querySelector('.pill');
   if (!pill || !state.plan) return;
   pill.outerHTML = renderPill({ sections: state.plan.model.sections, active: state.active, open: state.jump.open, mod: modLabel() });
   paintScroll();
+  paintTitlebar();
 }
 
 function paintScroll() {
@@ -150,6 +225,7 @@ function setActive(id) {
   state.active = id;
   if (!state.plan) return;
   const swap = () => {
+    paintOutline();
     refreshPill();
     paintSpine();
     paintScroll();
@@ -233,7 +309,7 @@ $('spine-toggle').addEventListener('change', e => {
   remember('spine', state.spine ? '1' : '0');
   paintSpine();
 });
-addEventListener('resize', () => { if (state.spine) paintSpine(); if (state.jump.open) placeJump(); });
+addEventListener('resize', () => { measureStrip(); if (state.spine) paintSpine(); if (state.jump.open) placeJump(); });
 $('jump').querySelector('.jq').addEventListener('input', e => {
   state.jump.q = e.target.value;
   state.jump.act = 0;
@@ -247,10 +323,18 @@ export function render() {
   applyTheme(state.choice);
   pushEmbedTokens();
   document.title = state.plan.model.title || state.plan.file;
+  state.fold ??= loadFold();
   setHTML($('strip'), renderStrip(state));
+  measureStrip();
   paintScroll();
   setHTML($('hero'), renderHero(state));
-  if (setHTML($('sections'), renderSections(state, hooks.visual))) {
+  if (state.focus.on && !focusTarget(state)) state.focus.on = false;
+  $('hero').hidden = state.focus.on;
+  paintOutline();
+  paintPhone();
+  setHTML($('titlebar'), renderTitlebar(state.plan.model));
+  paintTitlebar();
+  if (setHTML($('sections'), state.focus.on ? renderFocus(state, hooks.visual) : renderSections(state, hooks.visual))) {
     markChanged();
     hooks.afterSections($('sections'), document.documentElement.dataset.mode);
   }
@@ -264,7 +348,7 @@ export function render() {
 
 function updateLive() {
   const el = $('age');
-  if (el && state.plan && state.online) el.textContent = fmtAge(Date.now() - state.plan.changedAt);
+  if (el && state.plan && state.online) el.textContent = `Updated ${fmtAge(Date.now() - state.plan.changedAt)} ago`;
 }
 
 export function setChoice(k, v) {
@@ -276,7 +360,18 @@ export function setChoice(k, v) {
   render();
 }
 
+function setFocus(on, task = null) {
+  state.focus = { on, task };
+  $('sections')._html = null;
+  render();
+  scrollTo({ top: 0 });
+}
+
 function go(id) {
+  if (state.focus.on) {
+    if (taskStatuses(state.plan.model).byId.has(id)) { setFocus(true, id); return; }
+    setFocus(false);
+  }
   const el = $(id);
   el?.scrollIntoView({ behavior: smooth() });
   flash(el);
@@ -288,7 +383,15 @@ function jump(dir) {
   go(next);
 }
 
+const taskIds = () => [...taskStatuses(state.plan.model).byId.keys()];
+function stepFocus(dir) {
+  const ids = taskIds(), at = ids.indexOf(focusTarget(state)?.sectionId);
+  const next = ids[at + dir];
+  if (next) setFocus(true, next);
+}
+
 export const keymap = {
+  f: () => (state.focus.on ? setFocus(false) : taskStatuses(state.plan.model).now && setFocus(true)),
   j: () => jump(1),
   k: () => jump(-1),
   t: () => setChoice('theme', nextTheme(state.choice.theme)),
@@ -417,8 +520,11 @@ function connect() {
   es.addEventListener('review', e => {
     const r = JSON.parse(e.data);
     if (r.notice) toast(r.notice);
+    const alert = state.alerts && state.reviewSeen ? diffAlerts(state.review, r) : null;
     state.review = r;
+    state.reviewSeen = true;
     render();
+    if (alert) alertUser(alert);
   });
   es.addEventListener('gone', () => { document.body.classList.add('gone'); toast('Plan file is gone — showing the last version'); });
   es.onopen = () => { state.online = true; render(); };
@@ -442,7 +548,7 @@ async function boot() {
   if (!calm()) document.body.classList.add('intro');
   render();
   document.querySelectorAll('#sections > section').forEach((el, i) => el.style.setProperty('--i', Math.min(i, 8)));
-  countUp(document.querySelector('.ring b'), parseInt(document.querySelector('.ring b')?.textContent ?? '0', 10));
+  countUp(document.querySelector('.ov-pct'), parseInt(document.querySelector('.ov-pct')?.textContent ?? '0', 10));
   setTimeout(() => document.body.classList.remove('intro'), 1800);
   connect();
   matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
@@ -462,7 +568,8 @@ function setAnchor(anchor, el) {
 }
 
 function openComposer(anchor, editing = null) {
-  anchor ??= state.anchor ?? { sectionId: state.active ?? 'intro' };
+  const focused = state.focus.on ? focusTarget(state)?.sectionId : null;
+  anchor ??= state.anchor && (!focused || state.anchor.sectionId === focused) ? state.anchor : { sectionId: focused ?? state.active ?? 'intro' };
   state.composing = { anchor, editing: editing?.id ?? null };
   $('composer-anchor').textContent = `↳ ${anchorLabel(anchor, state.plan.model)}`;
   $('composer-body').value = editing?.body ?? '';
@@ -548,6 +655,23 @@ const revisionAction = action => async el => {
 Object.assign(actions, {
   apply: applyBatch,
   run: el => openRunConfirm(el.dataset.sec),
+  view: el => setView(el.dataset.view),
+  'phone-comment': () => openComposer(),
+  alerts: toggleAlerts,
+  fold: el => {
+    const id = el.dataset.sec, folded = el.closest('.card').classList.contains('folded');
+    state.fold = { ...state.fold, [id]: folded ? 'open' : 'closed' };
+    remember(foldKey(), JSON.stringify(state.fold));
+    $('sections')._html = null;
+    render();
+  },
+  top: () => scrollTo({ top: 0, behavior: smooth() }),
+  focus: () => setFocus(true),
+  'focus-exit': () => setFocus(false),
+  'focus-prev': () => stepFocus(-1),
+  'focus-next': () => stepFocus(1),
+  'focus-follow': () => setFocus(true),
+  tile: el => { const first = [...taskStatuses(state.plan.model).byId.values()].find(t => t.status === el.dataset.status); if (first) go(first.sectionId); },
   keys: openKeys,
   'keys-close': () => $('keys').close(),
   'embed-play': el => { const host = el.closest('.embed'); state.embeds.add(host.dataset.embed); playEmbed(host); },
@@ -581,8 +705,7 @@ document.addEventListener('click', e => {
   else if (sec) setAnchor({ sectionId: sec.dataset.sec }, sec);
 });
 
-document.addEventListener('mouseup', e => {
-  if (e.target.closest('#sel-comment')) return;
+function updateSelectionButton() {
   const sel = getSelection(), text = sel?.toString().trim(), btn = $('sel-comment');
   const host = sel?.anchorNode?.parentElement;
   const sec = host?.closest('main section[data-sec]');
@@ -593,7 +716,26 @@ document.addEventListener('mouseup', e => {
   btn.style.top = `${scrollY + r.top - 38}px`;
   btn.style.left = `${scrollX + r.left}px`;
   btn.hidden = false;
+}
+
+document.addEventListener('mouseup', e => {
+  if (e.target.closest('#sel-comment')) return;
+  updateSelectionButton();
 });
+
+// Phones send no mouseup after a long-press selection, so watch the selection itself.
+let selTimer = 0;
+document.addEventListener('selectionchange', () => {
+  if (!matchMedia('(max-width: 760px)').matches) return;
+  clearTimeout(selTimer);
+  selTimer = setTimeout(updateSelectionButton, 200);
+});
+
+if (globalThis.visualViewport) {
+  const keyboard = () => document.documentElement.style.setProperty('--kb', `${Math.max(0, Math.round(innerHeight - visualViewport.height - visualViewport.offsetTop))}px`);
+  visualViewport.addEventListener('resize', keyboard);
+  visualViewport.addEventListener('scroll', keyboard);
+}
 
 queueMicrotask(boot);
 

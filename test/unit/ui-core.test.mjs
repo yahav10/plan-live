@@ -36,7 +36,8 @@ test('theme choice precedence: url > storage > defaults > built-in', () => {
   assert.deepEqual(resolveChoice({}, '?theme=nope', { get: () => null }), { theme: 'aurora', mode: 'auto' });
   assert.equal(nextMode('dark'), 'auto');
   assert.equal(nextTheme('blueprint'), 'fluid');
-  assert.equal(nextTheme('fluid'), 'aurora');
+  assert.equal(nextTheme('fluid'), 'slate');
+  assert.equal(nextTheme('slate'), 'aurora');
 });
 
 test('strip: one pill for the active section, no tab row, compact age', () => {
@@ -51,9 +52,9 @@ test('strip: one pill for the active section, no tab row, compact age', () => {
   assert.equal(fmtAge(7_300_000), '2h');
 });
 
-test('hero: ring, eyebrow, title, field chips and file line', () => {
+test('hero: overview, eyebrow, title, field chips and file line', () => {
   const html = renderHero(state({ review: { comments: [{ status: 'draft' }, { status: 'queued' }], batches: [], revisions: [] } }));
-  assert.match(html, /--p:25/);
+  assert.match(html, /<b class="ov-pct">25%<\/b>/);
   assert.match(html, /rev 1 \(2026-10-08\)/);
   assert.match(html, /<h1 class="title">Mini Plan<\/h1>/);
   assert.match(html, /<a class="chip" href="https:\/\/example\.com\/browse\/MINI-1"/);
@@ -68,4 +69,8 @@ test('sections: cards per section, tasks carry id/hash/text, first open task is 
   assert.match(html, new RegExp(`data-task="${t.id}"[^>]*data-hash="${t.hash}"`));
   assert.match(html, /class="task doing"[^>]*data-task="task-1-parser\/implement-parse"/);
   assert.match(html, /<table>/);
+});
+
+test('strip: the live chip says when the plan last changed', () => {
+  assert.match(renderStrip(state()), /<span id="age">Updated \d+[smh] ago<\/span>/);
 });

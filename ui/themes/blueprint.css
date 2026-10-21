@@ -32,10 +32,8 @@
 [data-theme="blueprint"] .card > h2::before { content: attr(data-n); font: 600 11px var(--font-mono); color: var(--bg); background: var(--accent); padding: 1px 6px; margin-right: 10px; }
 [data-theme="blueprint"] .dag .node rect { stroke-dasharray: 4 3; }
 [data-theme="blueprint"] .dag .node.doing rect, [data-theme="blueprint"] .dag .node.done rect { stroke-dasharray: none; }
-[data-theme="blueprint"] .ring { background: none; }
-[data-theme="blueprint"] .ring::after { content: ""; position: absolute; inset: 0; border-radius: 50%; background: repeating-conic-gradient(var(--accent) 0 3deg, transparent 3deg 6deg);
-  -webkit-mask: radial-gradient(closest-side, transparent calc(100% - 9px), #000 calc(100% - 9px)), conic-gradient(#000 calc(var(--p) * 1%), rgba(0,0,0,.18) 0); -webkit-mask-composite: source-in;
-  mask: radial-gradient(closest-side, transparent calc(100% - 9px), #000 calc(100% - 9px)), conic-gradient(#000 calc(var(--p) * 1%), rgba(0,0,0,.18) 0); mask-composite: intersect; }
+[data-theme="blueprint"] .ov-bar, [data-theme="blueprint"] .tm-bar, [data-theme="blueprint"] .tile, [data-theme="blueprint"] .now, [data-theme="blueprint"] .st, [data-theme="blueprint"] .need { border-radius: 0; }
+[data-theme="blueprint"] .ov-bar i { background: repeating-linear-gradient(90deg, var(--accent) 0 6px, transparent 6px 8px); }
 [data-theme="blueprint"] .cb, [data-theme="blueprint"] .cmt, [data-theme="blueprint"] .apply { border-radius: 0; }
 [data-theme="blueprint"] .apply { text-transform: uppercase; letter-spacing: .1em; font-size: 12px; }
 @keyframes march { to { stroke-dashoffset: -14; } }
@@ -64,3 +62,4 @@
 [data-theme="blueprint"] .btn:active, [data-theme="blueprint"] .tbtn:active, [data-theme="blueprint"] button.pill:active, [data-theme="blueprint"] .ibtn:active { background: var(--accent); color: var(--bg); transform: none; }
 [data-theme="blueprint"] .rail { border-left: 2px solid var(--accent); background-image: repeating-linear-gradient(0deg, transparent 0 31px, var(--line) 31px 32px); }
 [data-theme="blueprint"] .rail-h b { text-transform: uppercase; letter-spacing: .08em; font-size: .875rem; }
+@media (max-width: 900px) { [data-theme="blueprint"] .strip::before { display: none; } }

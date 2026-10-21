@@ -1,5 +1,6 @@
 import { anchorLabel } from './components/review.mjs';
 import { embedTokens, embedSrc } from './components/media.mjs';
+import { icon } from './icons.mjs';
 
 export const exportName = (file, suffix, ext) => {
   const base = String(file || 'plan').replace(/\.md$/i, '').replace(/[^\w.-]+/g, '-').replace(/^-+|-+$/g, '') || 'plan';
@@ -128,6 +129,7 @@ export async function standaloneHtml(file) {
   const fonts = await inlineFonts(fontsCss, themeCss);
   const main = document.querySelector('main').cloneNode(true);
   main.querySelectorAll('.xtools, .pill.c, .chip.warn, .marker').forEach(n => n.remove());
+  main.querySelectorAll('.folded').forEach(n => n.classList.remove('folded'));
   main.querySelectorAll('.pulse, .anchored, .flip, .landed, .enter').forEach(n => n.classList.remove('pulse', 'anchored', 'flip', 'landed', 'enter'));
   let embeds = 0;
   const tokens = embedTokens();
@@ -137,7 +139,7 @@ export async function standaloneHtml(file) {
       const wrap = document.createElement('div');
       wrap.className = 'embed embed-export';
       wrap.setAttribute('style', host.getAttribute('style') ?? '');
-      wrap.innerHTML = '<div class="embed-head"><span>Embedded animation · sandboxed</span></div><details><summary class="btn">▶ Click to run</summary><div class="embed-stage"><iframe class="embed-frame" sandbox="allow-scripts" loading="lazy" referrerpolicy="no-referrer" title="Embedded animation"></iframe></div></details>';
+      wrap.innerHTML = `<div class="embed-head"><span>Embedded animation · sandboxed</span></div><details><summary class="btn">${icon('play', 12)} Click to run</summary><div class="embed-stage"><iframe class="embed-frame" sandbox="allow-scripts" loading="lazy" referrerpolicy="no-referrer" title="Embedded animation"></iframe></div></details>`;
       wrap.querySelector('iframe').setAttribute('data-doc', page);
       host.replaceWith(wrap);
       embeds++;

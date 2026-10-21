@@ -1,4 +1,5 @@
 import { esc } from '../lib.mjs';
+import { icon } from '../icons.mjs';
 
 const unfinished = p => p.total > 0 && p.done < p.total;
 const nodeOf = (model, sectionId) => model.graph.nodes.find(n => n.sectionId === sectionId);
@@ -25,6 +26,6 @@ export function runState(comments, sectionId) {
 export function renderRunButton({ model, sectionId, comments }) {
   if (!runnable(model, sectionId)) return '';
   const st = runState(comments, sectionId);
-  const label = st === 'draft' ? 'Queued' : st === 'queued' ? 'Running…' : '▶ Run';
+  const label = st === 'draft' ? 'Queued' : st === 'queued' ? 'Running…' : `${icon('play', 11)} Run`;
   return `<button class="run${st ? ' on' : ''}" data-act="run" data-sec="${esc(sectionId)}"${st ? ' disabled' : ''}>${label}</button>`;
 }

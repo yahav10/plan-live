@@ -25,7 +25,7 @@
   background: radial-gradient(40% 50% at 20% 30%, #5b4bff 0%, transparent 70%), radial-gradient(35% 45% at 70% 10%, #ff4fb0 0%, transparent 70%), radial-gradient(30% 40% at 90% 60%, #00c2ff 0%, transparent 70%);
 }
 [data-theme="aurora"] .card { backdrop-filter: blur(12px); }
-[data-theme="aurora"] .ring { background: conic-gradient(#8b7bff, #47d7ff calc(var(--p) * .5%), #3ee0a7 calc(var(--p) * 1%), var(--track) 0); }
+[data-theme="aurora"] .ov-bar i { background: linear-gradient(90deg, #8b7bff, #47d7ff 50%, #3ee0a7); }
 [data-theme="aurora"] h1.title { background: var(--title-grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
 [data-theme="aurora"] .dag .node.doing rect { filter: drop-shadow(0 0 10px var(--accent)); }
 @keyframes drift { from { transform: translate3d(-3%, 0, 0) scale(1); } to { transform: translate3d(4%, 6%, 0) scale(1.12); } }

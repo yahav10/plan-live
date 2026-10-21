@@ -1,6 +1,8 @@
-export const THEMES = { aurora: 'Aurora', editorial: 'Editorial', blueprint: 'Blueprint', fluid: 'Fluid' };
+import { icon } from './icons.mjs';
+
+export const THEMES = { aurora: 'Aurora', editorial: 'Editorial', blueprint: 'Blueprint', fluid: 'Fluid', slate: 'Slate' };
 export const MODES = ['auto', 'light', 'dark'];
-const ICON = { auto: '◐', light: '☀', dark: '☾' };
+const ICON = { auto: 'auto', light: 'sun', dark: 'moon' };
 
 const localStore = {
   get(k) { try { return localStorage.getItem(`plan-live.${k}`); } catch { return null; } },
@@ -21,6 +23,6 @@ export function applyTheme({ theme, mode }) {
 
 export const nextMode = m => MODES[(MODES.indexOf(m) + 1) % MODES.length];
 export const nextTheme = t => { const k = Object.keys(THEMES); return k[(k.indexOf(t) + 1) % k.length]; };
-export const modeIcon = m => ICON[m];
+export const modeIcon = m => icon(ICON[m], 15);
 export const remember = (k, v) => localStore.set(k, v);
 export const recall = k => localStore.get(k);

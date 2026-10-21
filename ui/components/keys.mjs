@@ -5,6 +5,7 @@ export const SHORTCUTS = [
   { keys: ['J'], does: 'Next section' },
   { keys: ['K'], does: 'Previous section' },
   { keys: ['C'], does: 'Add a comment' },
+  { keys: ['F'], does: 'Focus on the current task' },
   { keys: ['Enter'], does: 'Apply comments to Claude' },
   { keys: ['T'], does: 'Switch theme' },
   { keys: ['D'], does: 'Switch light or dark' },

@@ -25,20 +25,20 @@ test('cards rise in once on first load and never replay on live updates', async 
   expect(await style(page, '#sections .card', 'animationName')).not.toBe('rise');
 });
 
-test('reduced motion disables the entrance and ring animations', async ({ browser, plan }) => {
+test('reduced motion disables the entrance and progress bar animations', async ({ browser, plan }) => {
   const ctx = await browser.newContext({ reducedMotion: 'reduce' });
   const page = await ctx.newPage();
   await page.goto(plan.url);
   await expect(page.locator('h1.title')).toBeVisible();
   expect(await style(page, '#sections .card', 'animationName')).toBe('none');
-  expect(await style(page, '.ring', 'animationName')).toBe('none');
+  expect(await style(page, '.ov-bar i', 'animationName')).toBe('none');
   await ctx.close();
 });
 
-test('ring and pill arc sweep from zero on first load', async ({ page, plan }) => {
+test('progress bar and pill arc sweep from zero on first load', async ({ page, plan }) => {
   await page.goto(plan.url);
   await expect(page.locator('body')).toHaveClass(/intro/);
-  expect(await style(page, '.ring', 'animationName')).toBe('ring-sweep');
+  expect(await style(page, '.ov-bar i', 'animationName')).toBe('bar-sweep');
   expect(await style(page, '.pill', 'animationName')).toBe('pill-in');
 });
 

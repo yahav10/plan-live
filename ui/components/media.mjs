@@ -1,4 +1,5 @@
 import { esc } from '../lib.mjs';
+import { icon } from '../icons.mjs';
 
 export const embedSrc = (id, tokens, { still = false } = {}) => `/embed/${encodeURIComponent(id)}?tokens=${encodeURIComponent(JSON.stringify(tokens))}${still ? '&still=1' : ''}`;
 
@@ -16,7 +17,7 @@ export function renderImage({ alt, src, title }) {
 export function renderEmbed({ id, height }) {
   return `<div class="embed" data-embed="${esc(id)}" style="--h:${Number(height) || 320}px">`
     + '<div class="embed-head"><span>Embedded animation · sandboxed</span><span class="embed-tools"><button class="link" data-act="embed-replay" hidden>Replay</button><button class="link" data-act="embed-stop" hidden>Stop</button></span></div>'
-    + '<div class="embed-stage"><button class="btn embed-play" data-act="embed-play">▶ Click to run</button></div></div>';
+    + '<div class="embed-stage"><button class="btn embed-play" data-act="embed-play">' + icon('play', 12) + ' Click to run</button></div></div>';
 }
 
 const TOKENS = ['--bg', '--card', '--ink', '--ink-2', '--muted', '--line', '--line-strong', '--accent', '--accent-ink', '--accent-soft', '--ok', '--warn', '--note', '--font-body', '--font-mono'];
@@ -49,7 +50,7 @@ export function stopEmbed(host) {
   const play = document.createElement('button');
   play.className = 'btn embed-play';
   play.dataset.act = 'embed-play';
-  play.textContent = '▶ Click to run';
+  play.innerHTML = `${icon('play', 12)} Click to run`;
   host.querySelector('.embed-stage').replaceChildren(play);
   setTools(host, false);
 }

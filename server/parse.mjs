@@ -105,8 +105,8 @@ function parseUnsafe(markdown) {
     used.set(base, n);
     return n === 1 ? base : `${base}-${n}`;
   };
-  let section = null, fence = null, para = null, list = null, table = null, callout = null, gap = false;
-  const endBlocks = () => { para = list = table = callout = null; };
+  let section = null, fence = null, para = null, list = null, table = null, callout = null, quote = null, gap = false;
+  const endBlocks = () => { para = list = table = callout = quote = null; };
   const push = b => (section ? section.blocks : model.preamble).push(b);
 
   for (let i = 0; i < lines.length; i++) {
@@ -156,6 +156,16 @@ function parseUnsafe(markdown) {
       }
       callout = null;
     }
+    const qm = raw.match(/^>\s?(.*)$/);
+    if (qm) {
+      if (!quote) { endBlocks(); quote = { type: 'quote', paras: [], line: ln }; gap = false; push(quote); }
+      const t = qm[1].trim();
+      if (!t) gap = true;
+      else if (gap || !quote.paras.length) { quote.paras.push(t); gap = false; }
+      else quote.paras[quote.paras.length - 1] += ' ' + t;
+      continue;
+    }
+    quote = null;
 
     if (/^\s*\|/.test(raw)) {
       if (table) { table.rows.push(cells(raw)); continue; }

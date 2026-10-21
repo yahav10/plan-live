@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
-const THEMES = ['aurora', 'editorial', 'blueprint', 'fluid'], MODES = ['light', 'dark'];
+const THEMES = ['aurora', 'editorial', 'blueprint', 'fluid', 'slate'], MODES = ['light', 'dark'];
 const TOKENS = ['--bg', '--card', '--rail', '--ink', '--ink-2', '--muted', '--line', '--line-strong', '--accent', '--accent-ink', '--accent-soft', '--ok', '--warn', '--note', '--note-soft', '--chip', '--hover', '--track', '--node', '--node-stroke', '--edge', '--del', '--del-bg', '--add', '--add-bg', '--apply-bg', '--apply-ink', '--apply-shadow'];
 const TEXT = ['--ink', '--ink-2', '--muted', '--accent-ink', '--ok', '--warn', '--note', '--del', '--add'];
 

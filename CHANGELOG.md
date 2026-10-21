@@ -2,6 +2,25 @@
 
 All notable changes to plan-live. Versions follow [semver](https://semver.org).
 
+## Unreleased
+
+### Added
+- Overview header. A progress bar with the step count, four tiles (Done, In progress, Blocked, To do) that list their task numbers and jump to the first task of that kind, and a Now bar with a Focus button. It replaces the progress ring in every theme.
+- Task status. Every task heading shows a status pill, its step count, a Needs chip for each dependency (ticked when finished, click to jump), and a thin progress bar. One shared rule decides the status for the header, the cards, the outline and the focus page.
+- Outline sidebar from 1280px wide: every section with its status and step count, following where you are.
+- Focus page. Press `F` or the Focus button to see one task with its next step highlighted. Browse with the arrows, follow the current task automatically, `F` to return.
+- Finished tasks fold to their heading. A finished task with comments still waiting stays open, and the choice is remembered per plan file.
+- A slim title and progress line under the top bar once the header scrolls away. Click it to go back to the top.
+- Plain `>` quotes now render as quotes. Checkboxes inside a quote or callout are not plan steps.
+- A line-icon set (`ui/icons.mjs`) replaces emoji and symbol glyphs in the interface, and a unit test fails if one is added.
+- Phone layout under 760px: a bottom bar with Plan, Now and Review tabs, a comment button and an alerts switch; a status line that says what is waiting; a comment sheet that stays above the keyboard; a docked Comment bar for touch text selection; tables as one-line rows you tap to open; bigger tap targets; and optional alerts with a tone and a buzz when Claude answers. plan-live still listens on 127.0.0.1 only.
+- Slate, a fifth theme: flat and quiet, a teal accent, orange for comments, sections that read like a document, roomier type. Light and dark, with the same contrast tests as the others.
+
+### Changed
+- The top-left chip reads "Updated 2m ago" instead of a bare "2m".
+- The section pill now shrinks instead of pushing the top bar wider than the window. This showed in Blueprint at about 800px.
+- On a narrow screen the page no longer grows wider than the phone when a plan has a wide graph or long names.
+
 ## 0.8.0
 
 ### Added

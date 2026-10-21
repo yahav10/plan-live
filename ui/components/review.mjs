@@ -1,4 +1,5 @@
 import { esc, inline } from '../lib.mjs';
+import { icon } from '../icons.mjs';
 
 const trunc = (s, n) => (s.length > n ? s.slice(0, n - 1) + '…' : s);
 
@@ -9,7 +10,7 @@ export function anchorLabel(anchor, model) {
 
 const diff = (minus, plus) => `<div class="diff">${minus.map(l => `<div class="del">- ${esc(l)}</div>`).join('')}${plus.map(l => `<div class="add">+ ${esc(l)}</div>`).join('')}</div>`;
 
-const KIND_LABEL = { suggestion: 'Suggestion', run: '▶ Run' };
+const KIND_LABEL = { suggestion: 'Suggestion', run: `${icon('play', 11)} Run` };
 
 function commentCard(c, model, { editable = false } = {}) {
   const suggestion = c.kind === 'suggestion' ? diff([c.anchor.quote ?? ''], [c.replacement ?? '']) : '';

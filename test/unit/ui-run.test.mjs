@@ -38,7 +38,7 @@ test('the run button is absent, ready, queued or running', () => {
   const id = sec('T1').id;
   assert.equal(renderRunButton({ model, sectionId: 'goals', comments: [] }), '');
   const ready = renderRunButton({ model, sectionId: id, comments: [] });
-  assert.match(ready, new RegExp(`<button class="run" data-act="run" data-sec="${id}"[^>]*>▶ Run</button>`));
+  assert.match(ready, new RegExp(`<button class="run" data-act="run" data-sec="${id}"[^>]*><svg class="ic"[\\s\\S]*?</svg> Run</button>`));
   assert.ok(!ready.includes('disabled'));
   assert.match(renderRunButton({ model, sectionId: id, comments: [{ kind: 'run', status: 'draft', anchor: { sectionId: id } }] }), /class="run on" [^>]*disabled[^>]*>Queued</);
   assert.match(renderRunButton({ model, sectionId: id, comments: [{ kind: 'run', status: 'queued', anchor: { sectionId: id } }] }), /disabled[^>]*>Running…</);

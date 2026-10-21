@@ -46,8 +46,29 @@ await open('blueprint', 'dark');
 await shot('hero-blueprint-dark');
 await open('fluid', 'light');
 await shot('hero-fluid-light');
+await open('slate', 'light');
+await shot('hero-slate-light');
 await open('aurora', 'light');
 await shot('hero-aurora-light');
+
+await open('aurora', 'light');
+await page.evaluate(() => scrollTo(0, 0));
+await shot('overview', { screenshot: o => page.screenshot({ ...o, clip: { x: 0, y: 0, width: 1440, height: 640 } }) });
+
+{
+  const phone = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, hasTouch: true, isMobile: true, reducedMotion: 'reduce' });
+  const p = await phone.newPage();
+  await p.goto(`${srv.url}&theme=fluid&mode=light`);
+  await p.locator('.overview').waitFor();
+  await p.waitForTimeout(500);
+  await p.screenshot({ path: `${out}phone.png` });
+  console.log('phone');
+  await p.locator('[data-view=now]').tap();
+  await p.waitForTimeout(400);
+  await p.screenshot({ path: `${out}phone-now.png` });
+  console.log('phone-now');
+  await phone.close();
+}
 
 {
   const { mkdtempSync, copyFileSync } = await import('node:fs');

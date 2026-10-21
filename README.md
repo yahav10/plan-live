@@ -136,7 +136,7 @@ Flowcharts and sequence diagrams render from a bundled copy of Mermaid, offline.
 </tr>
 </table>
 
-Everything animates with purpose (a staggered entrance, a progress ring that sweeps, checkboxes that pop, comments that slide in) and goes completely still if your OS asks for **reduced motion**.
+Everything animates with purpose (a staggered entrance, a progress bar that sweeps, checkboxes that pop, comments that slide in) and goes completely still if your OS asks for **reduced motion**.
 
 ## Export everything
 
@@ -169,9 +169,28 @@ Task sections with unfinished steps get a **Run** button. Click it, read the con
 
 Runs travel the same loop as comments, so the watcher must be running (the confirm tells you if it is not), and Claude Code still asks permission before running anything that needs it. Only plan edits come back as diffs to accept or reject; code Claude writes elsewhere is not shown on the page.
 
+## Progress at a glance
+
+The top of the page shows where the plan stands, not just how much is done: a progress bar with the step count, four tiles (**Done**, **In progress**, **Blocked**, **To do**) that list their task numbers and jump to the first task of that kind when clicked, and a **Now** bar naming the current task with a **Focus** button.
+
+A task is **done** when every step is ticked, **in progress** when some are ticked or it holds the plan's next unticked step, **blocked** when it has not started and depends on a task that is not finished, and **to do** otherwise. Every task heading shows the same status, its step count, and a **Needs** chip for each dependency, ticked when finished. Click a chip to jump there.
+
+- **Outline.** From 1280px wide, a sticky column on the left lists every section with its status and step count, and follows where you are.
+- **Focus page.** Press `F` or the **Focus** button to see one task: its status, the next step highlighted, all its steps and notes. The arrows browse other tasks, and it follows the current task on its own when you tick the last step. `F` returns to the plan.
+- **Finished tasks fold.** A task whose steps are all ticked collapses to its heading. Click the heading to open it again. A finished task with comments still waiting stays open, and your choice is remembered for that plan file.
+- **Title line.** Once the header scrolls away, a slim line shows the plan title and `29% · 14 of 49`, with the progress along its edge. Click it to go back to the top.
+
+<img src="docs/screenshots/overview.png" alt="The overview header with progress, status tiles and the Now bar, the outline on the left, and task cards with status and Needs chips" width="860">
+
+## On a phone
+
+Under 760px wide the page becomes a phone layout: a bottom bar with **Plan**, **Now** (the focus page) and **Review** tabs, a comment button and an alerts switch. A line above it says what is waiting ("2 changes from Claude to review", "Claude is working on 1 comment…", "1 draft ready") and opens Review when tapped. Tap a step and then the comment button, or select text, and the comment box opens as a sheet above the keyboard. Tables become one-line rows you tap to open. Turn on **alerts** and the page gives a tone and a buzz when Claude answers a comment or proposes a change, while the page is open.
+
+plan-live still listens on **127.0.0.1 only**. To use it from a phone you need a tunnel you control, for example one that forwards your machine's port.
+
 ## Callouts, dependencies and shortcuts
 
-**Callouts.** A GitHub-style alert becomes a coloured box in the page:
+**Callouts.** A plain `>` quote renders as a quote, and a GitHub-style alert becomes a coloured box with an icon:
 
 ```
 > [!WARNING] Careful
@@ -217,14 +236,15 @@ An embed is click to run. It runs in a sandboxed frame with no access to the pag
 
 ## Themes
 
-Four themes, each in light and dark. Switch from the top bar or press `T` and `D`.
+Five themes, each in light and dark. Switch from the top bar or press `T` and `D`.
 
 <table>
 <tr>
-<td align="center" width="25%"><img src="docs/screenshots/hero-aurora-dark.png" alt="Aurora dark"><br><b>Aurora</b><br><sub>gradient glow, soft glass</sub></td>
-<td align="center" width="25%"><img src="docs/screenshots/hero-editorial-light.png" alt="Editorial light"><br><b>Editorial</b><br><sub>serif type, paper, sticky-note comments</sub></td>
-<td align="center" width="25%"><img src="docs/screenshots/hero-blueprint-dark.png" alt="Blueprint dark"><br><b>Blueprint</b><br><sub>drafting grid, corner brackets, marching dashes</sub></td>
-<td align="center" width="25%"><img src="docs/screenshots/hero-fluid-light.png" alt="Fluid light"><br><b>Fluid</b><br><sub>system font, frosted materials, one blue accent</sub></td>
+<td align="center" width="20%"><img src="docs/screenshots/hero-aurora-dark.png" alt="Aurora dark"><br><b>Aurora</b><br><sub>gradient glow, soft glass</sub></td>
+<td align="center" width="20%"><img src="docs/screenshots/hero-editorial-light.png" alt="Editorial light"><br><b>Editorial</b><br><sub>serif type, paper, sticky-note comments</sub></td>
+<td align="center" width="20%"><img src="docs/screenshots/hero-blueprint-dark.png" alt="Blueprint dark"><br><b>Blueprint</b><br><sub>drafting grid, corner brackets, marching dashes</sub></td>
+<td align="center" width="20%"><img src="docs/screenshots/hero-fluid-light.png" alt="Fluid light"><br><b>Fluid</b><br><sub>system font, frosted materials, one blue accent</sub></td>
+<td align="center" width="20%"><img src="docs/screenshots/hero-slate-light.png" alt="Slate light"><br><b>Slate</b><br><sub>flat and quiet, teal accent, sections read like a document</sub></td>
 </tr>
 </table>
 
@@ -296,7 +316,7 @@ Want to see everything at once? Open the bundled example:
 **Command**
 
 ```
-/plan-live [plan.md] [--theme aurora|editorial|blueprint|fluid] [--mode auto|light|dark]
+/plan-live [plan.md] [--theme aurora|editorial|blueprint|fluid|slate] [--mode auto|light|dark]
 ```
 
 **Keyboard**
@@ -307,6 +327,8 @@ Want to see everything at once? Open the bundled example:
 | `⏎` | Apply draft comments |
 | `Ctrl` / `⌘` + `K` | Open the jump panel: type to filter sections, arrows and `⏎` to jump, `Esc` to close |
 | `J` / `K` | Next / previous section |
+| `F` | Focus on the current task, and back |
+| `?` | Show every shortcut |
 | `T` / `D` | Cycle theme / cycle light, dark, auto |
 
 **CLI** (what the plugin runs for you; handy for scripting)
